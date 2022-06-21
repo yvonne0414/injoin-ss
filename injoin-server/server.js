@@ -8,31 +8,18 @@ const path = require('path');
 const cors = require('cors');
 app.use(cors());
 
-const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-let pool = mysql
-  .createPool({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    // 為了 pool 新增的參數
-    connectionLimit: 10,
-    dateStrings: true,
-  });
+const pool = require('./utils/db');
 
 // RESTful API
-// 取得商品
-app.get('/', (req,res) => {
-  res.send('home')
-})
-
-app.get('/prdlist', async (req, res, next) => {
-  let [data, fields] = await pool.execute('SELECT * FROM `prd_list`');
-  res.json(data);
+app.get('/', (req, res) => {
+  res.send('home');
 });
+
+// 取得商品
+const PrdRouter = require('./routers/prdRouter');
+app.use('/api/prd', PrdRouter);
 
 // 會跳到最下方 5xx error
 app.get('/error', (req, res, next) => {
