@@ -17,9 +17,17 @@ app.get('/', (req, res) => {
   res.send('home');
 });
 
-// 取得商品
+// 商品
 const PrdRouter = require('./routers/prdRouter');
 app.use('/api/prd', PrdRouter);
+
+// 揪團
+const GroupRouter = require('./routers/groupRouter');
+app.use('/api/group', GroupRouter);
+
+// global
+const GlobalRouter = require('./routers/globalRouter');
+app.use('/api', GlobalRouter);
 
 // 會跳到最下方 5xx error
 app.get('/error', (req, res, next) => {
