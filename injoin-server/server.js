@@ -12,6 +12,8 @@ require('dotenv').config();
 
 const pool = require('./utils/db');
 
+app.use('/images', express.static(path.join(__dirname, 'public')));
+
 // RESTful API
 app.get('/', (req, res) => {
   res.send('home');

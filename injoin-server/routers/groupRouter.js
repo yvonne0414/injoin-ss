@@ -154,6 +154,18 @@ router.get('/private', async (req, res, next) => {
     data: pageData,
   });
 });
-// TODO:詳細
+
+// 詳細
+router.get('/:groupId', async (req, res, next) => {
+  let [groupDetailData, fields] = await pool.execute(
+    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id WHERE group_list.id = ?',
+    [req.params.groupId]
+  );
+  console.log(groupDetailData);
+
+  res.json({
+    data: groupDetailData,
+  });
+});
 
 module.exports = router;
