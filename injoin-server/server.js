@@ -27,6 +27,10 @@ app.use('/api/prd', PrdRouter);
 const GroupRouter = require('./routers/groupRouter');
 app.use('/api/group', GroupRouter);
 
+// 優惠券
+const CouponRouter = require('./routers/couponRouter');
+app.use('/api/coupon', CouponRouter);
+
 // global
 const GlobalRouter = require('./routers/globalRouter');
 app.use('/api', GlobalRouter);
