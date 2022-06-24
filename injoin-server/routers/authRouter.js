@@ -142,6 +142,13 @@ router.post('/login', async (req, res, next) => {
   res.json({ code: 0, result: returnMemver });
 });
 
+router.get('/logout', (req, res, next) => {
+  // 因為我們會依靠判斷 req.session.member 有沒有資料來當作有沒有登入
+  // 所以當我們把 req.session.member 設定成 null，那就登出了
+  req.session.member = null;
+  res.status(202).json({ code: 0, error: 'log out' });
+});
+
 router.use('/', (req, res, next) => {
   res.send('auth');
 });
