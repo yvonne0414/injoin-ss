@@ -12,7 +12,12 @@ require('dotenv').config();
 
 const pool = require('./utils/db');
 
-app.use('/images', express.static(path.join(__dirname, 'public')));
+app.use('/images/groupupload', express.static(path.join(__dirname, 'public','groupupload')));
+// http://localhost:3001/images/groupupload/1655978777594.svg
+
+// 使用者頭像上傳
+app.use('/images/members', express.static(path.join(__dirname, 'public','members')));
+// http://localhost:3001/images/members/1655978777594.svg
 
 // RESTful API
 app.get('/', (req, res) => {
@@ -26,6 +31,10 @@ app.use('/api/prd', PrdRouter);
 // 揪團
 const GroupRouter = require('./routers/groupRouter');
 app.use('/api/group', GroupRouter);
+
+// 註冊登入
+const AuthRouter = require("./routers/authRouter");
+app.use("/api/auth", AuthRouter);
 
 // global
 const GlobalRouter = require('./routers/globalRouter');
