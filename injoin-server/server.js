@@ -3,21 +3,53 @@ const express = require('express');
 const app = express();
 
 const path = require('path');
+require('dotenv').config();
+
+// 啟用 session
+// npm i express-session
+// express-session 預設是存在應用程式的記體體 (node server.js)
+// session-file-store 這個是為了把 session 存到硬碟去讓你們觀察
+// npm i session-file-store
+// 正式環境我們會在「記憶體」--> redis, memcached (database in memory)
+// console.log('secret', process.env.SESSION_SECRET);
+const expressSession = require('express-session');
+let FileStore = require('session-file-store')(expressSession);
+app.use(
+  expressSession({
+    store: new FileStore({
+      // 把 sessions 存到 simple-express 的外面
+      // 單純想避開 nodemon 的監控檔案變動重啟
+      path: path.join(__dirname, '..', 'sessions'),
+    }),
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
 
 // 使用第三方開發的中間件 cors，允許跨域
 const cors = require('cors');
 app.use(cors());
 
-require('dotenv').config();
+
+// express.urlencoded 要讓 express 認得 req 裡 body 裡面的資料
+// extended: false --> querystring
+// extended: true --> qs
+app.use(express.urlencoded({ extended: true }));
+// 要讓 express 認得 req 裡 json
+app.use(express.json());
+
+// require('dotenv').config();
 
 const pool = require('./utils/db');
 
-app.use('/images/groupupload', express.static(path.join(__dirname, 'public','groupupload')));
+app.use('/images', express.static(path.join(__dirname, 'public')));
 // http://localhost:3001/images/groupupload/1655978777594.svg
 
-// 使用者頭像上傳
-app.use('/images/members', express.static(path.join(__dirname, 'public','members')));
-// http://localhost:3001/images/members/1655978777594.svg
+// // 使用者頭像上傳
+// app.use('/images/members', express.static(path.join(__dirname, 'public','members')));
+// // http://localhost:3001/images/members/1655978777594.svg
 
 // RESTful API
 app.get('/', (req, res) => {
