@@ -122,12 +122,14 @@ router.get('/official', async (req, res, next) => {
   });
 });
 // 私人
-router.get('/private', async (req, res, next) => {
+router.get('/list', async (req, res, next) => {
   // 當前頁面
   let page = req.query.page || 1;
+  let groupCate = req.query.groupCate;
   // 抓資料
   let [allData, fields] = await pool.execute(
-    `SELECT group_list.*, user_list.name as username, tw_county.name as cityName FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code WHERE group_list.is_official =2`
+    `SELECT group_list.*, user_list.name as username, tw_county.name as cityName FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code WHERE group_list.is_official =?`,
+    [groupCate]
   );
   // 總數
   const total = allData.length;
@@ -141,8 +143,8 @@ router.get('/private', async (req, res, next) => {
 
   // 取得這一頁的資料 select * from table limit ? offet ?
   let [pageData] = await pool.execute(
-    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code WHERE group_list.is_official =2 ORDER BY start_time DESC LIMIT ? OFFSET ?',
-    [perPage, offset]
+    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id WHERE group_list.is_official =? ORDER BY start_time DESC LIMIT ? OFFSET ?',
+    [groupCate, perPage, offset]
   );
 
   res.json({
