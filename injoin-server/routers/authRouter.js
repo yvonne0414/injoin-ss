@@ -98,19 +98,19 @@ router.post('/register', uploader.single('photo'), registerRules, async (req, re
 
   // http://localhost:3001/images + /members/Photoname
   // save to db
-  // // 寫進 user_list 目前止寫入 name email user_img
-  // let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img) VALUE (?,?)', [req.body.name, req.body.email,photo]);
+  // 寫進 user_list 目前止寫入 name email user_img
+  let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img) VALUE (?,?,?)', [req.body.name, req.body.email,photo]);
 
-  // // 最新一筆的 id
-  // console.log(result.insertId);
+  // 最新一筆的 id
+  console.log(result.insertId);
 
-  // // 寫進 user_pwd
-  // await pool.execute("INSERT INTO user_pwd (user_id, passwd) VALUES(?,?) ",[result.insertId, hashPassword])
+  // 寫進 user_pwd
+  await pool.execute("INSERT INTO user_pwd (user_id, passwd) VALUES(?,?) ",[result.insertId, hashPassword])
 
   res.json({ code: 0, result: 'OK' });
 });
 
-// api/auth/login
+// /api/auth
 // id email
 router.post('/login', async (req, res, next) => {
   // 接收資料
@@ -137,7 +137,7 @@ router.post('/login', async (req, res, next) => {
   // npm install express-session session-file-store
   // 去 server.js 開啟
   let returnMemver = { id: member.id, email: member.email };
-  req.section.member = returnMemver;
+  req.session.member = returnMemver;
 
   res.json({ code: 0, result: returnMemver });
 });
