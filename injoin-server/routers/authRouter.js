@@ -88,11 +88,12 @@ router.post('/register', uploader.single('photo'), registerRules, async (req, re
   }
 
   // 雜湊密碼
+  // console.log(req.body.password);
   let hashPassword = await bcrypt.hash(req.body.password, 10);
   // console.log(hashPassword);
 
   // 圖片處理完成後
-  console.log('req.file', req.file);
+  // console.log('req.file', req.file);
   // 有給照片就留 沒給就給其他的 ?
   let photo = req.file ? '/member' + req.file.filename : '';
 
@@ -102,7 +103,7 @@ router.post('/register', uploader.single('photo'), registerRules, async (req, re
   let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img) VALUE (?,?,?)', [req.body.name, req.body.email,photo]);
 
   // 最新一筆的 id
-  console.log(result.insertId);
+  // console.log(result.insertId);
 
   // 寫進 user_pwd
   await pool.execute("INSERT INTO user_pwd (user_id, passwd) VALUES(?,?) ",[result.insertId, hashPassword])
@@ -119,7 +120,7 @@ router.post('/login', async (req, res, next) => {
   // 檢查有沒有註冊過
   // chen@test.com
   let [members] = await pool.execute(
-    'SELECT user_list.id, user_list.email, user_pwd.passwd AS password FROM user_list JOIN user_pwd ON user_list.id = user_pwd.user_id WHERE email = ? ',
+    'SELECT user_list.id, user_list.email,user_list.name, user_pwd.passwd AS password FROM user_list JOIN user_pwd ON user_list.id = user_pwd.user_id WHERE email = ? ',
     [req.body.email]
   );
   if (members.length === 0) {
@@ -128,7 +129,11 @@ router.post('/login', async (req, res, next) => {
   let member = members[0];
 
   // 檢查密碼
+  // console.log(req.body.password)
+  // console.log(member.password)
+
   let passwordCompareResult = await bcrypt.compare(req.body.password, member.password);
+  // console.log(passwordCompareResult);
   if (passwordCompareResult === false) {
     return res.status(400).json({ code: 3004, error: '密碼錯誤' });
   }
@@ -136,7 +141,8 @@ router.post('/login', async (req, res, next) => {
   // 開始寫session
   // npm install express-session session-file-store
   // 去 server.js 開啟
-  let returnMemver = { id: member.id, email: member.email };
+  console.log(member);
+  let returnMemver = { id: member.id, email: member.email,name:member.name };
   req.session.member = returnMemver;
 
   res.json({ code: 0, result: returnMemver });
@@ -148,9 +154,9 @@ router.get('/logout', (req, res, next) => {
   req.session.member = null;
   res.status(202).json({ code: 0, error: 'log out' });
 });
-
 router.use('/', (req, res, next) => {
   res.send('auth');
 });
+
 
 module.exports = router;
