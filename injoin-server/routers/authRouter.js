@@ -95,7 +95,7 @@ router.post('/register', uploader.single('photo'), registerRules, async (req, re
   // 圖片處理完成後
   // console.log('req.file', req.file);
   // 有給照片就留 沒給就給其他的 ?
-  let photo = req.file ? '/member' + req.file.filename : '';
+  let photo = req.file ? '/member/' + req.file.filename : '';
 
   // http://localhost:3001/images + /members/Photoname
   // save to db
@@ -120,7 +120,7 @@ router.post('/login', async (req, res, next) => {
   // 檢查有沒有註冊過
   // chen@test.com
   let [members] = await pool.execute(
-    'SELECT user_list.id, user_list.email,user_list.name, user_pwd.passwd AS password FROM user_list JOIN user_pwd ON user_list.id = user_pwd.user_id WHERE email = ? ',
+    'SELECT user_list.id, user_list.email,user_list.name,user_list.user_img, user_pwd.passwd AS password FROM user_list JOIN user_pwd ON user_list.id = user_pwd.user_id WHERE email = ? ',
     [req.body.email]
   );
   if (members.length === 0) {
@@ -141,8 +141,8 @@ router.post('/login', async (req, res, next) => {
   // 開始寫session
   // npm install express-session session-file-store
   // 去 server.js 開啟
-  console.log(member);
-  let returnMemver = { id: member.id, email: member.email,name:member.name };
+  // console.log(member);
+  let returnMemver = { id: member.id, email: member.email,name:member.name,img:member.user_img };
   req.session.member = returnMemver;
 
   res.json({ code: 0, result: returnMemver });
