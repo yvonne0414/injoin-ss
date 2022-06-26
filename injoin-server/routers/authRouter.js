@@ -100,8 +100,7 @@ router.post('/register', uploader.single('userphoto'), registerRules, async (req
   // 圖片處理完成後
   // console.log('req.file', req.file);
   // 有給照片就留 沒給就給其他的 ?
-  let photo = req.file ? '/member/' + req.file.filename : '';
-  console.log("photo: ", photo)
+  let photo = req.file ? '/members/' + req.file.filename : '';
 
   // http://localhost:3001/images + /members/Photoname
   // save to db
