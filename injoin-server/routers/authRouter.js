@@ -60,18 +60,18 @@ const uploader = multer({
 // 驗證資料
 const { body, validationResult } = require('express-validator');
 const registerRules = [
-  body('email').isEmail().withMessage('Email 欄位請填寫正確格式'),
-  body('password').isLength({ min: 8 }).withMessage('密碼長度至少為8'),
-  body('confirmPassword')
+  body('useremail').isEmail().withMessage('Email 欄位請填寫正確格式'),
+  body('userpassword').isLength({ min: 8 }).withMessage('密碼長度至少為8'),
+  body('userconfirmpassword')
     .custom((value, { req }) => {
-      return value === req.body.password;
+      return value === req.body.userpassword;
     })
     .withMessage('密碼驗證不一致'),
 ];
 
 // photo 特別處理
 // api/auth/register
-router.post('/register', uploader.single('photo'), registerRules, async (req, res, next) => {
+router.post('/register', uploader.single('userphoto'), registerRules, async (req, res, next) => {
   // console.log('register: ', req.body);
   // 驗證資料
   const validateResults = validationResult(req);
@@ -81,26 +81,33 @@ router.post('/register', uploader.single('photo'), registerRules, async (req, re
     return res.status(400).json({ code: 3001, error: error });
   }
 
+  // 年齡
+  if (req.body.userage < 18){
+    return res.status(400).json({ code: 3003, error: '未滿18歲' });
+  }
+
   // 檢查有沒有註冊過
-  let [member] = await pool.execute('SELECT id, email FROM user_list WHERE email = ?', [req.body.email]);
+  let [member] = await pool.execute('SELECT id, email FROM user_list WHERE email = ?', [req.body.useremail]);
   if (member.length !== 0) {
     return res.status(400).json({ code: 3002, error: '已經註冊過' });
   }
 
   // 雜湊密碼
   // console.log(req.body.password);
-  let hashPassword = await bcrypt.hash(req.body.password, 10);
+  let hashPassword = await bcrypt.hash(req.body.userpassword, 10);
   // console.log(hashPassword);
 
   // 圖片處理完成後
   // console.log('req.file', req.file);
   // 有給照片就留 沒給就給其他的 ?
   let photo = req.file ? '/member/' + req.file.filename : '';
+  console.log("photo: ", photo)
 
   // http://localhost:3001/images + /members/Photoname
   // save to db
   // 寫進 user_list 目前止寫入 name email user_img
-  let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img) VALUE (?,?,?)', [req.body.name, req.body.email,photo]);
+  let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img,gender,birth_day) VALUE (?,?,?,?,?)', 
+  [req.body.username, req.body.useremail,photo,req.body.usergender,req.body.userbirthday]);
 
   // 最新一筆的 id
   // console.log(result.insertId);
@@ -115,13 +122,13 @@ router.post('/register', uploader.single('photo'), registerRules, async (req, re
 // id email
 router.post('/login', async (req, res, next) => {
   // 接收資料
-  // console.log("req.body", req.body);
+  console.log("req.body", req.body);
 
   // 檢查有沒有註冊過
   // chen@test.com
   let [members] = await pool.execute(
     'SELECT user_list.id, user_list.email,user_list.name,user_list.user_img, user_pwd.passwd AS password FROM user_list JOIN user_pwd ON user_list.id = user_pwd.user_id WHERE email = ? ',
-    [req.body.email]
+    [req.body.loginusermail]
   );
   if (members.length === 0) {
     return res.status(400).json({ code: 3003, error: '尚未註冊過' });
@@ -129,10 +136,10 @@ router.post('/login', async (req, res, next) => {
   let member = members[0];
 
   // 檢查密碼
-  // console.log(req.body.password)
+  // console.log(req.body.loginuserpassword)
   // console.log(member.password)
 
-  let passwordCompareResult = await bcrypt.compare(req.body.password, member.password);
+  let passwordCompareResult = await bcrypt.compare(req.body.loginuserpassword, member.password);
   // console.log(passwordCompareResult);
   if (passwordCompareResult === false) {
     return res.status(400).json({ code: 3004, error: '密碼錯誤' });
@@ -145,7 +152,7 @@ router.post('/login', async (req, res, next) => {
   let returnMemver = { id: member.id, email: member.email,name:member.name,img:member.user_img };
   req.session.member = returnMemver;
 
-  res.json({ code: 0, result: returnMemver });
+  res.json({ code: 0, result: "success" });
 });
 
 router.get('/logout', (req, res, next) => {
