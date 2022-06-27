@@ -1,0 +1,11 @@
+{
+    "email": "chen1@test.com",
+    "name": "test",
+    "password": "test123456",
+    "confirmPassword": "test123456"
+}
+
+{
+    "email": "chen1@test.com",
+    "password": "test123456"
+}
