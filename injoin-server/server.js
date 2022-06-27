@@ -27,7 +27,6 @@ app.use(
   })
 );
 
-
 // 使用第三方開發的中間件 cors，允許跨域
 const cors = require('cors');
 // 這樣全開，但不包含跨源讀寫 cookie
@@ -43,8 +42,6 @@ app.use(
     credentials: true,
   })
 );
-
-
 
 // express.urlencoded 要讓 express 認得 req 裡 body 裡面的資料
 // extended: false --> querystring
@@ -73,16 +70,19 @@ app.get('/', (req, res) => {
 const PrdRouter = require('./routers/prdRouter');
 app.use('/api/prd', PrdRouter);
 
+//酒譜
+const BarRouter = require('./routers/barRouter');
+app.use('/api/bar', BarRouter);
+
 // 揪團
 const GroupRouter = require('./routers/groupRouter');
 app.use('/api/group', GroupRouter);
 
 // 註冊登入
-const AuthRouter = require("./routers/authRouter");
-app.use("/api/auth", AuthRouter);
+const AuthRouter = require('./routers/authRouter');
+app.use('/api/auth', AuthRouter);
 const MemberRouter = require('./routers/memberRouter');
 app.use('/api/member', MemberRouter);
-
 
 // global
 const GlobalRouter = require('./routers/globalRouter');
