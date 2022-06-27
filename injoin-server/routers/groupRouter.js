@@ -5,6 +5,7 @@ const pool = require('../utils/db');
 // for image upload
 const multer = require('multer');
 const path = require('path');
+
 // 圖片上傳需要地方放，在 public 裡，建立了 uploads 檔案夾
 // 設定圖片儲存的位置
 const storage = multer.diskStorage({
@@ -126,6 +127,19 @@ router.get('/list', async (req, res, next) => {
 
 // 詳細
 router.get('/groupdetail/:groupId', async (req, res, next) => {
+  let userId = req.query.userId;
+  let isJoin = false;
+
+  // 驗證是否報名過
+  let [participant] = await pool.execute('SELECT * FROM group_participant WHERE group_id = ?', [req.params.groupId]);
+  // console.log(participant);
+  for (let i = 0; i < participant.length; i++) {
+    if (Number(participant[i].user_id) === Number(userId)) {
+      isJoin = true;
+    }
+  }
+
+  // 取得詳細資料
   let [groupDetailData, fields] = await pool.execute(
     'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id WHERE group_list.id = ?',
     [req.params.groupId]
@@ -133,6 +147,7 @@ router.get('/groupdetail/:groupId', async (req, res, next) => {
   // console.log(groupDetailData);
 
   res.json({
+    isJoin,
     data: groupDetailData,
   });
 });
@@ -177,7 +192,7 @@ router.get('/ownaddgroup', async (req, res, next) => {
 
 // 參加揪團
 // groupCate:（官方：1, 私人：2）
-// groupStatus: (待參加：(3,0), 歷史紀錄:(4,2))
+// groupStatus: (待參加：(4,0), 歷史紀錄:(5,3))
 router.get('/participant', async (req, res, next) => {
   // console.log(req);
   // 當前頁面
@@ -218,60 +233,152 @@ router.get('/participant', async (req, res, next) => {
   });
 });
 
+// 編輯詳細
+router.get('/editgroupdetail/:groupId', async (req, res, next) => {
+  let userId = req.query.userId;
+  // TODO:判斷是否為團主（修改權限）
+  let [groupUserId] = await pool.execute(`SELECT user_id FROM group_list WHERE id=?;`, [req.params.groupId]);
+  if (Number(groupUserId[0].user_id) !== Number(userId)) {
+    res.json({ code: 10, result: '您沒有編輯權限' });
+    return;
+  }
+
+  // 取得詳細資料
+  let [groupDetailData, fields] = await pool.execute(
+    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, tw_county.code as cityCode, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id WHERE group_list.id = ?',
+    [req.params.groupId]
+  );
+  // console.log(groupDetailData);
+
+  res.json({
+    code: 0,
+    data: groupDetailData,
+  });
+});
+
 // 編輯活動
 router.post('/update/:groupId', uploader.single('groupImg'), async (req, res) => {
-  let groupImg = req.file ? '/groupupload/' + req.file.filename : '';
-  let groupStartTime = new Date(req.body.groupStartDate);
-  let groupEndTime = new Date(req.body.groupEndDate);
-
-  let [result] = await pool.execute(
-    'UPDATE `group_list` SET name = ?, disc = ?, max_num = ?, audit_time = ?, vip_level = ?, img = ?, price = ?, start_time = ?, end_time = ?, place_conuntry = ?, place_detail = ?  WHERE id = ?',
-    [
+  // 依有無上傳照片決定sql
+  let haveImg = Boolean(req.file);
+  // console.log(haveImg);
+  // 沒更新圖片時
+  if (!haveImg) {
+    let [result] = await pool.execute('UPDATE `group_list` SET name = ?, disc = ?, max_num = ?,  vip_level = ?, price = ?, place_conuntry = ?, place_detail = ?  WHERE id = ?', [
       req.body.groupName,
       req.body.groupDisc,
       req.body.groupPeopleNum,
-      req.body.groupDeadLine,
       req.body.vipLevel,
-      groupImg,
       req.body.groupFee,
-      groupStartTime,
-      groupEndTime,
       req.body.groupAddressCounty,
       req.body.groupAddressDetail,
       req.params.groupId,
-    ]
-  );
+    ]);
+  } else {
+    let groupImg = req.file ? '/groupupload/' + req.file.filename : '';
+    let [result] = await pool.execute(
+      'UPDATE `group_list` SET name = ?, disc = ?, max_num = ?,  vip_level = ?, img = ?, price = ?, place_conuntry = ?, place_detail = ?  WHERE id = ?',
+      [
+        req.body.groupName,
+        req.body.groupDisc,
+        req.body.groupPeopleNum,
+        req.body.vipLevel,
+        groupImg,
+        req.body.groupFee,
+        req.body.groupAddressCounty,
+        req.body.groupAddressDetail,
+        req.params.groupId,
+      ]
+    );
+  }
 
   // response
   res.json({ code: 0, result: 'OK' });
 });
-// 刪除活動
+
+// 刪除活動（軟刪除）
 router.post('/delete/:groupId', async (req, res) => {
   let [result] = await pool.execute('UPDATE `group_list` SET status = 4  WHERE id = ?', [req.params.groupId]);
 
   // response
   res.json({ code: 0, result: 'OK' });
 });
+
 // 報名活動
 router.post('/join/:groupId', async (req, res) => {
-  let userId = req.query.userId;
+  let userId = req.body.userId;
+
+  // 確定未報名過
+  let isJoin = false;
+  let [participant] = await pool.execute('SELECT * FROM group_participant WHERE group_id = ?', [req.params.groupId]);
+  for (let i = 0; i < participant.length; i++) {
+    if (Number(participant[i].user_id) === Number(userId)) {
+      isJoin = true;
+    }
+  }
+  // 報名過回傳已報名
+  if (isJoin) {
+    res.json({ code: 10, result: '您已報名過' });
+    return;
+  }
+
+  // savetodb
   let [result] = await pool.execute('INSERT INTO `group_participant` (group_id, user_id, audit_status) VALUES (?, ?, ?)', [req.params.groupId, userId, 0]);
 
   // response
   res.json({ code: 0, result: 'OK' });
 });
+
 // 取消報名活動
 router.post('/unjoin/:groupId', async (req, res) => {
-  let userId = req.query.userId;
+  console.log(req.body);
+  console.log(req.query);
+  console.log(req.params);
+
+  let userId = req.body.userId;
+
+  // 刪除參加者欄位
   let [result] = await pool.execute('DELETE FROM group_participant WHERE group_id = ? AND user_id = ?', [req.params.groupId, userId]);
+
+  // 更新現在參加人數
+  // 先抓參與人數
+  let [member] = await pool.execute('SELECT * FROM group_participant WHERE group_id = ? AND audit_status = 1', [req.params.groupId]);
+  // 更新參與人數
+  let [addmembernum] = await pool.execute('UPDATE group_list SET now_num = ? WHERE id = ?', [member.length, req.params.groupId]);
 
   // response
   res.json({ code: 0, result: 'OK' });
 });
-// TODO: 審核成員
-router.post('/checkmember/:groupId', async (req, res) => {
+
+// 取得活動成員
+router.get('/memberlist/:groupId', async (req, res) => {
   let userId = req.query.userId;
-  let [result] = await pool.execute('UPDATE group_participant SET audit_status = 1 WHERE group_id = ? AND user_id = ?', [req.params.groupId, userId]);
+  let [member] = await pool.execute(
+    'SELECT group_participant.*, user_list.name, user_list.user_img FROM group_participant JOIN user_list ON group_participant.user_id = user_list.id WHERE group_participant.group_id = ?',
+    [req.params.groupId]
+  );
+
+  // response
+  res.json({ data: member });
+});
+
+// 審核成員
+router.post('/checkmember/:groupId', async (req, res) => {
+  let memberId = req.body.memberId;
+  // 先確認人數未達上限
+  let [nowmember] = await pool.execute('SELECT max_num, now_num FROM group_list WHERE id= ?', [req.params.groupId]);
+  if ((nowmember[0].max_num = nowmember[0].now_num)) {
+    res.json({ code: 10, result: '人數已達上限' });
+    return;
+  }
+
+  // 更新審核狀態
+  let [result] = await pool.execute('UPDATE group_participant SET audit_status = 1 WHERE group_id = ? AND user_id = ?', [req.params.groupId, memberId]);
+
+  // 增加人數
+  // 先抓參與人數
+  let [member] = await pool.execute('SELECT * FROM group_participant WHERE group_id = ? AND audit_status = 1', [req.params.groupId]);
+  // 更新參與人數
+  let [addmembernum] = await pool.execute('UPDATE group_list SET now_num = ? WHERE id = ?', [member.length, req.params.groupId]);
 
   // response
   res.json({ code: 0, result: 'OK' });
