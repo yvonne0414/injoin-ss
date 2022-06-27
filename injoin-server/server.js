@@ -74,6 +74,10 @@ app.use('/api/prd', PrdRouter);
 const GroupRouter = require('./routers/groupRouter');
 app.use('/api/group', GroupRouter);
 
+// 訂單
+const OrderRouter = require('./routers/orderRouter');
+app.use('/api/order', OrderRouter);
+
 // 優惠券
 const CouponRouter = require('./routers/couponRouter');
 app.use('/api/coupon', CouponRouter);
