@@ -52,7 +52,7 @@ const uploader = multer({
   // 一般不會上傳太大的圖片尺寸，以免到時候前端開啟得很慢
   limits: {
     // 1k = 1024
-    fileSize: 200 * 1024,
+    fileSize: 1024 * 1024,
   },
 });
 
@@ -121,7 +121,7 @@ router.post('/register', uploader.single('userphoto'), registerRules, async (req
 // id email
 router.post('/login', async (req, res, next) => {
   // 接收資料
-  console.log("req.body", req.body);
+  // console.log("req.body", req.body);
 
   // 檢查有沒有註冊過
   // chen@test.com
