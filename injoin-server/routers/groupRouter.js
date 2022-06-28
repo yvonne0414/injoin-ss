@@ -179,6 +179,17 @@ router.get('/ownaddgroup', async (req, res, next) => {
     [userId, perPage, offset]
   );
   // console.log(pageData);
+  // 取得各個活動參加人員
+  let newPageData = [];
+  for (i = 0; i < pageData.length; i++) {
+    let [member] = await pool.execute(
+      'SELECT group_participant.*, user_list.name, user_list.user_img FROM group_participant JOIN user_list ON group_participant.user_id = user_list.id WHERE group_participant.group_id = ?',
+      [pageData[i].id]
+    );
+    // console.log(member);
+    newPageData.push({ ...pageData[i], member: member });
+  }
+  console.log(newPageData);
 
   res.json({
     pagination: {
@@ -186,7 +197,7 @@ router.get('/ownaddgroup', async (req, res, next) => {
       lastPage,
       page,
     },
-    data: pageData,
+    data: newPageData,
   });
 });
 
@@ -233,7 +244,7 @@ router.get('/participant', async (req, res, next) => {
   });
 });
 
-// 編輯詳細
+// 編輯頁詳細
 router.get('/editgroupdetail/:groupId', async (req, res, next) => {
   let userId = req.query.userId;
   // TODO:判斷是否為團主（修改權限）
@@ -366,7 +377,7 @@ router.post('/checkmember/:groupId', async (req, res) => {
   let memberId = req.body.memberId;
   // 先確認人數未達上限
   let [nowmember] = await pool.execute('SELECT max_num, now_num FROM group_list WHERE id= ?', [req.params.groupId]);
-  if ((nowmember[0].max_num = nowmember[0].now_num)) {
+  if (nowmember[0].max_num === nowmember[0].now_num) {
     res.json({ code: 10, result: '人數已達上限' });
     return;
   }
