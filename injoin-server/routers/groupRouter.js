@@ -189,7 +189,7 @@ router.get('/ownaddgroup', async (req, res, next) => {
     // console.log(member);
     newPageData.push({ ...pageData[i], member: member });
   }
-  console.log(newPageData);
+  // console.log(newPageData);
 
   res.json({
     pagination: {
@@ -247,7 +247,7 @@ router.get('/participant', async (req, res, next) => {
 // 編輯頁詳細
 router.get('/editgroupdetail/:groupId', async (req, res, next) => {
   let userId = req.query.userId;
-  // TODO:判斷是否為團主（修改權限）
+  // 判斷是否為團主（修改權限）
   let [groupUserId] = await pool.execute(`SELECT user_id FROM group_list WHERE id=?;`, [req.params.groupId]);
   if (Number(groupUserId[0].user_id) !== Number(userId)) {
     res.json({ code: 10, result: '您沒有編輯權限' });
@@ -341,9 +341,9 @@ router.post('/join/:groupId', async (req, res) => {
 
 // 取消報名活動
 router.post('/unjoin/:groupId', async (req, res) => {
-  console.log(req.body);
-  console.log(req.query);
-  console.log(req.params);
+  // console.log(req.body);
+  // console.log(req.query);
+  // console.log(req.params);
 
   let userId = req.body.userId;
 
