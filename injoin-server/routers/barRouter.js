@@ -5,10 +5,10 @@ const pool = require('../utils/db');
 router.get('/', async (req, res, next) => {
   // console.log('我是test');
   // TODO: 抓出有哪些酒譜
-  let [data, fields] = await pool
-    .execute
-    // 'SELECT bartd_list.*, bartd_material.bartd_id AS bartd_material_bartd_id, bartd_material.name AS bartd_material_name FROM bartd_list JOIN bartd_material ON bartd_list.id = bartd_material.bartd_id' ''
-    ();
+  let [data] = await pool.execute(
+    'SELECT bartd_list.*, bartd_material.bartd_id AS bartd_material_bartd_id, bartd_material.name AS bartd_material_name FROM bartd_list JOIN bartd_material ON bartd_list.id = bartd_material.bartd_id'
+  );
+  // console.log(data);
 
   // TODO: 從id去抓各個酒譜有哪些材料(data: for loop)
 
