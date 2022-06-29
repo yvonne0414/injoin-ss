@@ -31,17 +31,63 @@ router.get('/', async (req, res, next) => {
   // allData=[{id:1, name:米奇拉達 , material:[蕃茄汁, 現榨檸檬汁, 梅林辣醬油, 可樂娜啤酒, Tajin墨西哥調味粉]},{id:2, name:米奇拉達 , material:[蕃茄汁, 現榨檸檬汁, 梅林辣醬油, 可樂娜啤酒, Tajin墨西哥調味粉]}]
   res.json(data);
 });
-
+//大類別
 router.get('/type', async (req, res, next) => {
-  let [data] = await pool.execute('SELECT * FROM `bartd_cate_type`');
-  res.json(data);
+  let [majorSelData] = await pool.execute('SELECT * FROM `bartd_cate_type` WHERE level = 1');
+  let [subSelData] = await pool.execute('SELECT * FROM `bartd_cate_type` WHERE level = 2');
+  let majorSel = [];
+  let subSel = [[], [], [], []];
+  console.log(subSelData);
+  majorSel = majorSelData.map((v, i) => {
+    console.log(v);
+    return v.name;
+    // if (v.level === 1) {
+    //   majorSel.push(v.name, v.id);
+    // } else if (v.level === 2) {
+    //   for(let i=0;i<4;i++){
+    //     let arr =[]
+
+    //   }
+
+    //   }
+    //   subSel.push(v.name, v.parent_id);
+    // }
+  });
+  subSelData.map((v) => {
+    switch (v.parent_id) {
+      case 1:
+        subSel[0].push(v.name);
+        break;
+      case 2:
+        subSel[1].push(v.name);
+        break;
+      case 3:
+        subSel[2].push(v.name);
+        break;
+      case 4:
+        subSel[3].push(v.name);
+        break;
+    }
+  });
+  console.log(majorSel);
+  console.log(subSel);
+
+  // let subSelArr = '';
+  // for (let i = 0; i < subSel.length; i++) {
+  //   console.log(subSel[i].name);
+  //   data2Arr = `${subSelArr} ${subSel[i].name}`;
+  // }
+  // console.log(majorSel);
+  // console.log(subSel);
+  // data:{cate:[],content:[[],[]]}
+  res.json({ data: { majorSel, subSel } });
 });
+//小類別
+// router.get('/types', async (req, res, next) => {
+//   let [data] = await pool.execute('SELECT * FROM `bartd_cate_type`');
 
-// let smalltype = '';
-// for (let i = 0; i < smalltype.length; i++) {
-//   console.log(smalltype[i].name);
-
-// }
+//   res.json(data);
+// });
 
 // router.get('/:bartd_listID', async (req, res, next) => {
 //   let [data] = await pool.execute('SELECT * FROM `bartd_list` WHERE id = ' + req.params.bartd_listID);
