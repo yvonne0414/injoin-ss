@@ -83,6 +83,10 @@ app.use("/api/auth", AuthRouter);
 const MemberRouter = require('./routers/memberRouter');
 app.use('/api/member', MemberRouter);
 
+// 關於登入者資訊
+const UserRouter = require("./routers/userRouter")
+app.use('/api/userlike',UserRouter)
+
 
 // global
 const GlobalRouter = require('./routers/globalRouter');
