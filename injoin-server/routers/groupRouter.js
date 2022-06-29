@@ -395,5 +395,27 @@ router.post('/checkmember/:groupId', async (req, res) => {
   res.json({ code: 0, result: 'OK' });
 });
 // TODO: 聊天室
+// 聊天歷史資料
+router.get('/chat/:groupId', async (req, res) => {
+  let [allChat] = await pool.execute(
+    'SELECT group_participant.id as chatId, group_participant.group_id as groupId, group_participant.user_id  as userId, user_list.name, user_list.user_img  as userImg, group_chatroom_content.msg_time  as msgTime, group_chatroom_content.content FROM group_chatroom_content JOIN group_participant ON group_chatroom_content.participant_id = group_participant.id JOIN user_list ON group_participant.user_id = user_list.id WHERE group_participant.group_id = ?  ORDER BY group_chatroom_content.msg_time ASC',
+    [req.params.groupId]
+  );
+  let [members] = await pool.execute(
+    'SELECT group_participant.id, group_participant.group_id, group_participant.user_id as userId , user_list.name, user_list.user_img as userImg FROM group_participant JOIN user_list ON group_participant.user_id=user_list.id WHERE group_id = ? AND audit_status=1',
+    [req.params.groupId]
+  );
 
+  let [info] = await pool.execute(
+    'SELECT group_participant.id as chatId, group_list.name FROM group_participant JOIN group_list ON group_participant.group_id = group_list.id WHERE group_participant.group_id = ? AND group_participant.user_id = ?;',
+    [req.params.groupId, req.query.userId]
+  );
+  // let [chat] = await pool.execute(
+  //   'SELECT group_participant.id as chatId, group_participant.group_id as groupId, group_participant.user_id as userId, group_chatroom_content.msg_time as msgTime, group_chatroom_content.content FROM group_chatroom_content JOIN group_participant ON group_chatroom_content.participant_id = group_participant.id WHERE group_participant.group_id = ?',
+  //   [req.params.groupId]
+  // );
+
+  // response
+  res.json({ members: members, data: allChat, info: info });
+});
 module.exports = router;
