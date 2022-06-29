@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../utils/db');
 
-router.get('/', async (req, res, next) => {
+router.get('/prdList', async (req, res, next) => {
   // 當前頁面
   let page = req.query.page || 1;
 
@@ -12,7 +12,7 @@ router.get('/', async (req, res, next) => {
   const total = allData.length;
 
   // 計算總頁數
-  const perPage = 12; // 每一頁有幾筆
+  const perPage = 16; // 每一頁有幾筆
   const lastPage = Math.ceil(total / perPage);
 
   // 計算要跳過幾筆）
@@ -33,4 +33,8 @@ router.get('/', async (req, res, next) => {
   });
 });
 
+//大類別
+router.get('/prdCate', async (req, res, next) => {
+let 
+});
 module.exports = router;
