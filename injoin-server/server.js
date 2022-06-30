@@ -88,6 +88,10 @@ app.use('/api/auth', AuthRouter);
 const MemberRouter = require('./routers/memberRouter');
 app.use('/api/member', MemberRouter);
 
+// 關於登入者資訊
+const UserRouter = require('./routers/userRouter');
+app.use('/api/userlike', UserRouter);
+
 // global
 const GlobalRouter = require('./routers/globalRouter');
 app.use('/api', GlobalRouter);
@@ -113,6 +117,94 @@ app.use((err, req, res, next) => {
   res.status(500).send('Server Error: 請洽系統管理員');
 });
 
-app.listen(3001, () => {
-  console.log('Server start at 3001');
+// app.listen(3001, () => {
+//   console.log('Server start at 3001');
+// });
+//將 express 放進 http 中開啟 Server 的 3001 port ，正確開啟後會在 console 中印出訊息
+const server = require('http')
+  .Server(app)
+  .listen(3001, () => {
+    console.log('Server start at 3001');
+  });
+//將啟動的 Server 送給 socket.io 處理
+const socket = require('socket.io');
+const { default: axios } = require('axios');
+// const io = socket(server);
+const io = require('socket.io')(server, {
+  cors: {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['my-custom-header'],
+    credentials: true,
+  },
+});
+
+//監聽 Server 連線後的所有事件，並捕捉事件 socket 執行
+io.on('connection', (socket) => {
+  //經過連線後在 console 中印出訊息
+  // console.log('success connect!');
+
+  //監聽透過 connection 傳進來的事件
+  socket.on('addRoom', (room) => {
+    //加入前檢查是否已有所在房間
+    const nowRoom = Object.keys(socket.rooms).find((room) => {
+      return room !== socket.id;
+    });
+    //有的話要先離開
+    if (nowRoom) {
+      socket.leave(nowFoom);
+    }
+    //再加入新的
+    socket.join(room);
+    // socket.emit('addRoom', `已加入聊天室 ${room}！`);
+    // socket.to(room).emit('addRoom', '已有新人加入聊天室！');
+  });
+
+  socket.on('getMessage', async (message, room) => {
+    //加入前檢查是否已有所在房間
+    const nowRoom = Object.keys(socket.rooms).find((room) => {
+      return room !== socket.id;
+    });
+    //有的話要先離開
+    if (nowRoom) {
+      socket.leave(nowFoom);
+    }
+    //再加入新的
+    socket.join(room);
+    // console.log(message);
+
+    // TODO:存對話到資料庫(groupId, userId, content, time)
+    let [content] = await pool.execute('INSERT INTO group_chatroom_content (participant_id, msg_time, content) VALUES (?, ?, ?)', [
+      message.chatId,
+      message.msgTime,
+      message.content,
+    ]);
+
+    //回傳 message 給發送訊息的 Client
+    io.sockets.in(room).emit('getMessage', message);
+  });
+
+  //送出中斷申請時先觸發此事件
+  socket.on('disConnection', (message, room) => {
+    //加入前檢查是否已有所在房間
+    const nowRoom = Object.keys(socket.rooms).find((room) => {
+      return room !== socket.id;
+    });
+    //有的話要先離開
+    if (nowRoom) {
+      socket.leave(nowFoom);
+    }
+    //再加入新的
+    socket.join(room);
+    //先通知同一 room 的其他 Client
+    // socket.to(room).emit('leaveRoom', `${message} 已離開聊天！`);
+
+    //再送訊息讓 Client 做 .close()
+    socket.emit('disConnection', '');
+  });
+
+  //中斷後觸發此監聽
+  socket.on('disconnect', () => {
+    console.log('disconnection');
+  });
 });

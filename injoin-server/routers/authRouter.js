@@ -82,8 +82,8 @@ router.post('/register', uploader.single('userphoto'), registerRules, async (req
   }
 
   // 年齡
-  if (req.body.userage < 18){
-    return res.status(400).json({ code: 3003, error: '未滿18歲' });
+  if (req.body.userage < 18) {
+    return res.status(400).json({ code: 3003, error: ['未滿18歲'] });
   }
 
   // 檢查有沒有註冊過
@@ -105,14 +105,19 @@ router.post('/register', uploader.single('userphoto'), registerRules, async (req
   // http://localhost:3001/images + /members/Photoname
   // save to db
   // 寫進 user_list 目前止寫入 name email user_img
-  let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img,gender,birth_day) VALUE (?,?,?,?,?)', 
-  [req.body.username, req.body.useremail,photo,req.body.usergender,req.body.userbirthday]);
+  let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img,gender,birth_day) VALUE (?,?,?,?,?)', [
+    req.body.username,
+    req.body.useremail,
+    photo,
+    req.body.usergender,
+    req.body.userbirthday,
+  ]);
 
   // 最新一筆的 id
   // console.log(result.insertId);
 
   // 寫進 user_pwd
-  await pool.execute("INSERT INTO user_pwd (user_id, passwd) VALUES(?,?) ",[result.insertId, hashPassword])
+  await pool.execute('INSERT INTO user_pwd (user_id, passwd) VALUES(?,?) ', [result.insertId, hashPassword]);
 
   res.json({ code: 0, result: 'OK' });
 });
@@ -125,10 +130,9 @@ router.post('/login', async (req, res, next) => {
 
   // 檢查有沒有註冊過
   // chen@test.com
-  let [members] = await pool.execute(
-    'SELECT user_list.id, user_list.email,user_list.name,user_list.user_img, user_pwd.passwd AS password FROM user_list JOIN user_pwd ON user_list.id = user_pwd.user_id WHERE email = ? ',
-    [req.body.loginusermail]
-  );
+  let [members] = await pool.execute('SELECT user_list.*, user_pwd.passwd AS password FROM user_list JOIN user_pwd ON user_list.id = user_pwd.user_id WHERE email = ? ', [
+    req.body.loginusermail,
+  ]);
   if (members.length === 0) {
     return res.status(400).json({ code: 3003, error: '尚未註冊過' });
   }
@@ -148,10 +152,45 @@ router.post('/login', async (req, res, next) => {
   // npm install express-session session-file-store
   // 去 server.js 開啟
   // console.log(member);
-  let returnMemver = { id: member.id, email: member.email,name:member.name,img:member.user_img };
+
+  let returnMemver = { ...member, password: '' };
+  // console.log(returnMemver)
   req.session.member = returnMemver;
 
-  res.json({ code: 0, result: "success" });
+  res.json({ code: 0, result: 'success' });
+});
+
+router.post('/changepwd', async (req, res, next) => {
+  let [datas] = await pool.execute('SELECT * FROM user_pwd WHERE user_id = ?', [req.body.userid]);
+
+  data = datas[0];
+
+  // 檢查密碼
+  // console.log(req.body);
+  // console.log(data.passwd);
+
+  let passwordCompareResult = await bcrypt.compare(req.body.passwd, data.passwd);
+  // console.log(passwordCompareResult);
+
+  if (passwordCompareResult === false) {
+    return res.status(400).json({ code: 3004, error: '密碼錯誤' });
+  }
+  if (req.body.newpasswd !== req.body.renewpasswd) {
+    return res.status(400).json({ code: 3005, error: '請輸入相同密碼' });
+  }
+  // console.log(req.body.newpasswd);
+  let hashPassword = await bcrypt.hash(req.body.newpasswd, 10);
+  // console.log(hashPassword);
+
+  await pool.execute('UPDATE user_pwd SET passwd=? WHERE user_id = ? ', [hashPassword, req.body.userid]);
+
+  res.json({ code: 0, error: 'SUCCESS' });
+});
+
+// /api/auth/about
+router.get('/about/:userid', async (req, res, next) => {
+  let [datas] = await pool.execute('SELECT user_list.name, user_list.email, user_list.user_img FROM `user_list` WHERE id = ? ', [req.params.userid]);
+  res.json({ datas });
 });
 
 router.get('/logout', (req, res, next) => {
@@ -160,9 +199,9 @@ router.get('/logout', (req, res, next) => {
   req.session.member = null;
   res.status(202).json({ code: 0, error: 'log out' });
 });
+
 router.use('/', (req, res, next) => {
   res.send('auth');
 });
-
 
 module.exports = router;
