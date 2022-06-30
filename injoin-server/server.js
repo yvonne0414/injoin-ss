@@ -82,6 +82,10 @@ app.use('/api/group', GroupRouter);
 const OrderRouter = require('./routers/orderRouter');
 app.use('/api/order', OrderRouter);
 
+// 購物車
+const CartRouter = require('./routers/cartRouter');
+app.use('/api/cart', CartRouter);
+
 // 優惠券
 const CouponRouter = require('./routers/couponRouter');
 app.use('/api/coupon', CouponRouter);
