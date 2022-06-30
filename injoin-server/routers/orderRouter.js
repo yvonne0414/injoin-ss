@@ -6,6 +6,38 @@ const pool = require('../utils/db');
 const multer = require('multer');
 const path = require('path');
 
+//訂單詳細
+router.use('/detail/:orderId', async (req, res, next) => {
+  // http://localhost:3001/api/order/detail/e66ddd1e-a0f4-bc33-1ca0-f8c3134cf65c
+
+  // console.log(req.body);
+  console.log(req.params);
+  // console.log(req.query);
+  let [orderUser] = await pool.execute(
+    `SELECT user_list.id, user_list.name, user_list.phone, user_list.email, user_list.address_country, user_list.address_detail, tw_county.name as countyName FROM user_list JOIN order_list ON user_list.id = order_list.user_id JOIN tw_county ON user_list.address_country = tw_county.code WHERE order_list.id = ?`,
+    [req.params.orderId]
+  );
+  // console.log(orderUser);
+
+  let [orderDetailData, fields] = await pool.execute(
+    `SELECT order_list.*, logistics_state_cate.name AS logisticsStatename, logistics_cate.name AS logisticsCateName FROM order_list JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id WHERE order_list.id = ?`,
+    [req.params.orderId]
+  );
+  console.log(orderDetailData);
+
+  let [orderPrd] = await pool.execute(
+    `SELECT prd_list.id,prd_list.prd_num,prd_list.name,prd_list.price,order_detail.amount,prd_list.category,prd_list.status,prd_list.main_img,prd_list.inventory_quantity FROM order_detail JOIN prd_list ON order_detail.prd_id = prd_list.id WHERE order_id = ?`,
+    [req.params.orderId]
+  );
+  console.log(orderPrd);
+
+  // res.json({
+  //   data: orderDetailData,
+  // });
+  res.json({ orderuser: orderUser, data: orderDetailData, orderprd: orderPrd });
+  // {orderuser:orderUser, orederDetail:orderDetailData, orderprd:orderPrd}
+});
+
 // 訂單列表 + 分頁
 router.get('/', async (req, res, next) => {
   // 當前頁面
@@ -55,35 +87,5 @@ router.get('/', async (req, res, next) => {
 //   );
 //   res.json(data);
 // });
-
-//訂單詳細
-router.use('/detail/:orderId', async (req, res, next) => {
-  // console.log(req.body);
-  console.log(req.params);
-  // console.log(req.query);
-  let [orderUser] = await pool.execute(
-    `SELECT user_list.id, user_list.name, user_list.phone, user_list.email, user_list.address_country, user_list.address_detail, tw_county.name as countyName FROM user_list JOIN order_list ON user_list.id = order_list.user_id JOIN tw_county ON user_list.address_country = tw_county.code WHERE order_list.id = ?`,
-    [req.params.orderId]
-  );
-  // console.log(orderUser);
-
-  let [orderDetailData, fields] = await pool.execute(
-    `SELECT order_list.id,order_list.user_id, order_detail.prd_id, order_detail.price, order_detail.amount, order_list.logistics, logistics_cate.name AS logisticsName,order_list.logistics_state, logistics_state_cate.name AS stateName ,order_list.order_time FROM order_detail JOIN order_list ON order_detail.order_id = order_list.id JOIN logistics_cate on order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_id = '1d3b713c-f001-4139-8dd0-7f94b20185e6'`,
-    [req.params.orderId]
-  );
-  console.log(orderDetailData);
-
-  let [orderPrd] = await pool.execute(
-    `SELECT prd_list.id,prd_list.prd_num,prd_list.name,prd_list.price,order_detail.amount,prd_list.category,prd_list.status,prd_list.main_img,prd_list.inventory_quantity FROM order_detail JOIN prd_list ON order_detail.prd_id = prd_list.id WHERE order_id = ?`,
-    [req.params.orderId]
-  );
-  console.log(orderPrd);
-
-  // res.json({
-  //   data: orderDetailData,
-  // });
-  res.json({ orderuser: orderUser, data: orderDetailData, orderprd:orderPrd });
-  // {orderuser:orderUser, orederDetail:orderDetailData, orderprd:orderPrd}
-});
 
 module.exports = router;
