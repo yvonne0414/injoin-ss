@@ -1,0 +1,76 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.0
+-- https://www.phpmyadmin.net/
+--
+-- 主機： 127.0.0.1
+-- 產生時間： 2022-06-30 08:39:34
+-- 伺服器版本： 10.4.24-MariaDB
+-- PHP 版本： 8.1.6
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- 資料庫： `injoin_db`
+--
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `bartd_list`
+--
+-- 建立時間： 2022-06-27 16:59:33
+--
+
+DROP TABLE IF EXISTS `bartd_list`;
+CREATE TABLE `bartd_list` (
+  `id` int(3) UNSIGNED NOT NULL,
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `img` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `recipe` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- 傾印資料表的資料 `bartd_list`
+--
+
+INSERT INTO `bartd_list` (`id`, `name`, `img`, `recipe`) VALUES
+(1, '米奇拉達  Micheladas', '/bartending/A008.jpg', '１．將啤酒以外的材料加入做好粉口的握把式啤酒杯\r\n２．攪拌均勻後，插入啤酒\r\n３．最後放上裝飾物即可\r\n\r\n裝飾物：Tajin墨西哥調味粉、檸檬角'),
+(2, '草莓黛綺莉', '/bartending/R037.jpg', '１．調理機加入所有材料及冰塊。\r\n２．將打製均勻的成品倒入淺碟香檳杯(大)。\r\n\r\n建議裝飾物：雙片草莓切片、草莓碎'),
+(3, '皇后公園希維索', '/bartending/R034.jpg', '１．將苦精以外的材料倒入杯中，加入八分滿碎冰。\r\n２．劇烈攪拌所有材料後，補滿碎冰。\r\n３．酒液表面灑上苦精，置頂裝飾\r\n\r\n裝飾物：薄荷葉'),
+(5, '蔓越莓卡琵莉亞', '/bartending/R035.jpg', '１．古典杯放入所有材料，攪拌均勻。\r\n２．加入及碎冰，再次攪拌。\r\n\r\n裝飾物：新鮮莓果、食用花朵'),
+(6, '百香果卡琵莉亞', '/bartending/R036.jpg', '１．古典杯放入香料蘭姆酒以外材料。\r\n２．加入碎冰，攪拌均勻。\r\n３．放上裝飾物，倒入些許香料蘭姆酒後點火。\r\n\r\n裝飾物：百香果殼'),
+(7, '羅勒碎酒', '/bartending/G062.jpg', '１．雪克杯放入些許琴酒與羅勒葉搗碎。\r\n２．再加入檸檬角用搗棒搗碎出汁。\r\n３．倒入其餘材料加冰搖勻。\r\n４．雙重過濾酒液到裝滿冰塊的古典杯。\r\n\r\n建議裝飾物：羅勒葉'),
+(8, '荊棘  Bramble', '/bartending/G061.jpg', '１．雪克杯加入材料，搖盪均勻\r\n２．濾掉冰塊，將酒液倒入裝滿碎冰的古典杯\r\n\r\n裝飾物：蔓越莓、覆盆子，淋上卡騰七號香甜酒');
+
+--
+-- 已傾印資料表的索引
+--
+
+--
+-- 資料表索引 `bartd_list`
+--
+ALTER TABLE `bartd_list`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- 在傾印的資料表使用自動遞增(AUTO_INCREMENT)
+--
+
+--
+-- 使用資料表自動遞增(AUTO_INCREMENT) `bartd_list`
+--
+ALTER TABLE `bartd_list`
+  MODIFY `id` int(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

@@ -70,6 +70,10 @@ app.get('/', (req, res) => {
 const PrdRouter = require('./routers/prdRouter');
 app.use('/api/prd', PrdRouter);
 
+//酒譜
+const BarRouter = require('./routers/barRouter');
+app.use('/api/bar', BarRouter);
+
 // 揪團
 const GroupRouter = require('./routers/groupRouter');
 app.use('/api/group', GroupRouter);
