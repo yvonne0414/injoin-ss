@@ -100,12 +100,12 @@ router.post('/register', uploader.single('userphoto'), registerRules, async (req
   // 圖片處理完成後
   // console.log('req.file', req.file);
   // 有給照片就留 沒給就給其他的 ?
-  let photo = req.file ? '/members/' + req.file.filename : '';
+  let photo = req.file ? '/members/' + req.file.filename : req.body.usergender === 'F' ? '/userimgs/user_defult_f.png' : '/userimgs/user_defult_m.png';
 
   // http://localhost:3001/images + /members/Photoname
   // save to db
   // 寫進 user_list 目前止寫入 name email user_img
-  let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img,gender,birth_day) VALUE (?,?,?,?,?)', [
+  let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img,gender,birth_day,address_country, phone, vip_level) VALUE (?,?,?,?,?,1,"",1)', [
     req.body.username,
     req.body.useremail,
     photo,
