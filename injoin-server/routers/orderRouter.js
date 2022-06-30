@@ -11,8 +11,9 @@ router.get('/', async (req, res, next) => {
   // 當前頁面
   console.log(req.query);
   let page = req.query.page || 1;
-  let userId = req.query.userId;
-  let logisticsState = req.query.logisticsState;
+  let userId = req.query.userId || 1;
+  let logisticsState = req.query.logisticsState || 1;
+
   // 抓資料
   let [allData, fields] = await pool.execute(
     `SELECT order_list.*, user_list.name as userName, user_list.phone as userPhone, user_list.email as userEmail, user_list.address_detail as userAddress, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_list.user_id = ? AND order_list.logistics_state = ? `,
@@ -60,15 +61,29 @@ router.use('/detail/:orderId', async (req, res, next) => {
   // console.log(req.body);
   console.log(req.params);
   // console.log(req.query);
+  let [orderUser] = await pool.execute(
+    `SELECT user_list.id, user_list.name, user_list.phone, user_list.email, user_list.address_country, user_list.address_detail, tw_county.name as countyName FROM user_list JOIN order_list ON user_list.id = order_list.user_id JOIN tw_county ON user_list.address_country = tw_county.code WHERE order_list.id = ?`,
+    [req.params.orderId]
+  );
+  // console.log(orderUser);
+
   let [orderDetailData, fields] = await pool.execute(
-    `SELECT order_detail.order_id, order_detail.prd_id, prd_list.prd_num AS prdNum, prd_list.name AS prdName, prd_list.price AS prdPrice, prd_list.main_img AS prdImg, prd_list.category AS prdCategory, order_detail.amount FROM order_detail JOIN prd_list ON order_detail.prd_id = prd_list.id WHERE order_detail.order_id = ?`,
+    `SELECT order_list.id,order_list.user_id, order_detail.prd_id, order_detail.price, order_detail.amount, order_list.logistics, logistics_cate.name AS logisticsName,order_list.logistics_state, logistics_state_cate.name AS stateName ,order_list.order_time FROM order_detail JOIN order_list ON order_detail.order_id = order_list.id JOIN logistics_cate on order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_id = '1d3b713c-f001-4139-8dd0-7f94b20185e6'`,
     [req.params.orderId]
   );
   console.log(orderDetailData);
 
-  res.json({
-    data: orderDetailData,
-  });
+  let [orderPrd] = await pool.execute(
+    `SELECT prd_list.id,prd_list.prd_num,prd_list.name,prd_list.price,order_detail.amount,prd_list.category,prd_list.status,prd_list.main_img,prd_list.inventory_quantity FROM order_detail JOIN prd_list ON order_detail.prd_id = prd_list.id WHERE order_id = ?`,
+    [req.params.orderId]
+  );
+  console.log(orderPrd);
+
+  // res.json({
+  //   data: orderDetailData,
+  // });
+  res.json({ orderuser: orderUser, data: orderDetailData, orderprd:orderPrd });
+  // {orderuser:orderUser, orederDetail:orderDetailData, orderprd:orderPrd}
 });
 
 module.exports = router;
