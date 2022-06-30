@@ -31,7 +31,8 @@ router.get('/', async (req, res, next) => {
   // allData=[{id:1, name:米奇拉達 , material:[蕃茄汁, 現榨檸檬汁, 梅林辣醬油, 可樂娜啤酒, Tajin墨西哥調味粉]},{id:2, name:米奇拉達 , material:[蕃茄汁, 現榨檸檬汁, 梅林辣醬油, 可樂娜啤酒, Tajin墨西哥調味粉]}]
   res.json(data);
 });
-//大類別
+
+//類別  majorSel大類別 subSel小類別
 router.get('/type', async (req, res, next) => {
   let [majorSelData] = await pool.execute('SELECT * FROM `bartd_cate_type` WHERE level = 1');
   let [subSelData] = await pool.execute('SELECT * FROM `bartd_cate_type` WHERE level = 2');
@@ -41,17 +42,6 @@ router.get('/type', async (req, res, next) => {
   majorSel = majorSelData.map((v, i) => {
     console.log(v);
     return v.name;
-    // if (v.level === 1) {
-    //   majorSel.push(v.name, v.id);
-    // } else if (v.level === 2) {
-    //   for(let i=0;i<4;i++){
-    //     let arr =[]
-
-    //   }
-
-    //   }
-    //   subSel.push(v.name, v.parent_id);
-    // }
   });
   subSelData.map((v) => {
     switch (v.parent_id) {
@@ -72,22 +62,9 @@ router.get('/type', async (req, res, next) => {
   console.log(majorSel);
   console.log(subSel);
 
-  // let subSelArr = '';
-  // for (let i = 0; i < subSel.length; i++) {
-  //   console.log(subSel[i].name);
-  //   data2Arr = `${subSelArr} ${subSel[i].name}`;
-  // }
-  // console.log(majorSel);
-  // console.log(subSel);
   // data:{cate:[],content:[[],[]]}
   res.json({ data: { majorSel, subSel } });
 });
-//小類別
-// router.get('/types', async (req, res, next) => {
-//   let [data] = await pool.execute('SELECT * FROM `bartd_cate_type`');
-
-//   res.json(data);
-// });
 
 // router.get('/:bartd_listID', async (req, res, next) => {
 //   let [data] = await pool.execute('SELECT * FROM `bartd_list` WHERE id = ' + req.params.bartd_listID);
