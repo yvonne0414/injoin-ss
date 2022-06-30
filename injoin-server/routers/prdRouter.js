@@ -30,38 +30,45 @@ router.get('/prdList', async (req, res, next) => {
   });
 });
 
-//大類別
+
 router.get('/prdCate', async (req, res, next) => {
-  let [prdMajorData] = await pool.execute('SELECT * FROM `prd_detail_cate` WHERE level = 1');
-  let [prdMinorData] = await pool.execute('SELECT * FROM `prd_detail_cate` WHERE level = 2');
-  let prdMajor = [];
-  let prdMinor = [[], [], [], []];
-  console.log(prdMinorData);
-  prdMajor = prdMajorData.map((v, i) => {
+  // 大類別
+  let [majorPrdSelData] = await pool.execute('SELECT * FROM `prd_detail_cate` WHERE level = 1');
+  // 中類別
+  let [subPrdSelData] = await pool.execute('SELECT * FROM `prd_detail_cate` WHERE level = 2');
+  // 小類別
+  let [thirdPrdSelData] = await pool.execute('SELECT * FROM `prd_detail_cate` WHERE level = 3');
+  let majorPrdSel = [];
+  let subPrdSel = [[], [], [], []];
+  let thirdPrdSel = [];
+  console.log(majorPrdSelData);
+  majorPrdSel = majorPrdSelData.map((v, i) => {
     console.log(v);
     return v.name;
   });
-  console.log(prdMinorData);
-  prdMinorData.map((v) => {
+  console.log(subPrdSelData);
+  subPrdSelData.map((v) => {
     // console.log(v.name);
     switch (v.parent_id) {
       case 1:
-        prdMinor[0].push(v.name);
+        subPrdSel[0].push(v.name);
         break;
       case 2:
-        prdMinor[1].push(v.name);
+        subPrdSel[1].push(v.name);
         break;
       case 3:
-        prdMinor[2].push(v.name);
+        subPrdSel[2].push(v.name);
         break;
       case 4:
-        prdMinor[3].push(v.name);
+        subPrdSel[3].push(v.name);
         break;
     }
   });
-  // console.log(prdMajor);
-  // console.log(prdMinor);
+  // thirdPrdSel.map((v) => {
+  //   switch (v.parent_id)
+  // });
 
-  res.json({ prdMajor, prdMinor });
+
+  res.json({ majorPrdSel, subPrdSel });
 });
 module.exports = router;
