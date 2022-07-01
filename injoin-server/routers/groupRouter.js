@@ -394,7 +394,8 @@ router.post('/checkmember/:groupId', async (req, res) => {
   // response
   res.json({ code: 0, result: 'OK' });
 });
-// TODO: 聊天室
+
+// 聊天室
 // 聊天歷史資料
 router.get('/chat/:groupId', async (req, res) => {
   let [allChat] = await pool.execute(

@@ -65,7 +65,6 @@ app.use('/images', express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
   // console.log(req.session);
   res.send('home');
-
 });
 
 // 商品
@@ -79,6 +78,10 @@ app.use('/api/bar', BarRouter);
 // 揪團
 const GroupRouter = require('./routers/groupRouter');
 app.use('/api/group', GroupRouter);
+
+// 評價
+const ReputationRouter = require('./routers/reputationRouter');
+app.use('/api/reputation', ReputationRouter);
 
 // 訂單
 const OrderRouter = require('./routers/orderRouter');
