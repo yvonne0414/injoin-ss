@@ -71,7 +71,7 @@ router.get('/prdCate', async (req, res, next) => {
 });
 
 router.get('/detail/:prdId', async (req, res, next) => {
-  // 商品名稱
+  // 商品細項用到的名稱
   let [detailData] = await pool.execute(
     'SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.main_img, prd_list.disc, prd_type1_detail.cate_m, prd_type1_detail.cate_s, prd_list.rate, prd_type1_detail.brand,prd_type1_detail.capacity, prd_origin.name AS originName FROM prd_list JOIN prd_type1_detail on prd_list.id = prd_type1_detail.prd_id JOIN prd_origin ON prd_type1_detail.origin = prd_origin.id WHERE prd_list.id = ?',
     [req.params.prdId]
