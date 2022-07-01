@@ -157,7 +157,7 @@ router.post('/login', async (req, res, next) => {
   // console.log(returnMemver)
   req.session.member = returnMemver;
 
-  res.json({ code: 0, result: 'success' });
+  res.json({ code: 0, result: returnMemver });
 });
 
 router.post('/changepwd', async (req, res, next) => {
@@ -196,7 +196,9 @@ router.get('/about/:userid', async (req, res, next) => {
 router.get('/logout', (req, res, next) => {
   // 因為我們會依靠判斷 req.session.member 有沒有資料來當作有沒有登入
   // 所以當我們把 req.session.member 設定成 null，那就登出了
-  req.session.member = null;
+  req.session.destroy()
+  res.clearCookie('connect.sid')
+
   res.status(202).json({ code: 0, error: 'log out' });
 });
 
