@@ -41,7 +41,7 @@ router.get('/bartd/:user_id', async (req, res, next) => {
   // 計算要跳過幾筆）
   let offset = (page - 1) * perPage;
   [data3] = await pool.execute(
-    'SELECT user_bartd_like.*,user_list.name as user_name, bartd_list.name as name ,bartd_list.img as bartd_img FROM `user_bartd_like` JOIN user_list ON user_bartd_like.user_id = user_list.id JOIN bartd_list ON user_bartd_like.bartd_id = bartd_list.id WHERE user_bartd_like.user_id = ? ORDER BY user_bartd_like.id DESC LIMIT ? OFFSET ?',
+    'SELECT user_bartd_like.user_id,user_bartd_like.bartd_id AS id,user_list.name as user_name, bartd_list.name as name ,bartd_list.img as bartd_img FROM `user_bartd_like` JOIN user_list ON user_bartd_like.user_id = user_list.id JOIN bartd_list ON user_bartd_like.bartd_id = bartd_list.id WHERE user_bartd_like.user_id = ? ORDER BY user_bartd_like.id DESC LIMIT ? OFFSET ?',
     [req.params.user_id, perPage, offset]
   );
 
@@ -58,8 +58,8 @@ router.get('/bartd/:user_id', async (req, res, next) => {
     // console.log(data[index]);
     data3[index] = { ...data3[index], material: string };
 
-    console.log(data3[index]);
-    console.log(data3);
+    // console.log(data3[index]);
+    // console.log(data3);
   }
   
   res.json({
