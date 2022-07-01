@@ -63,7 +63,9 @@ app.use('/images', express.static(path.join(__dirname, 'public')));
 
 // RESTful API
 app.get('/', (req, res) => {
+  // console.log(req.session);
   res.send('home');
+
 });
 
 // 商品
