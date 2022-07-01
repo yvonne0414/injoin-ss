@@ -15,7 +15,7 @@ router.get('/prdList', async (req, res, next) => {
   const perPage = 16; // 每一頁有幾筆
   const lastPage = Math.ceil(total / perPage);
 
-  // 計算要跳過幾筆）
+  // 計算要跳過幾筆
   let offset = (page - 1) * perPage;
 
   // 取得這一頁的資料 select * from table limit ? offet ?
@@ -29,7 +29,6 @@ router.get('/prdList', async (req, res, next) => {
     data: pageData,
   });
 });
-
 
 router.get('/prdCate', async (req, res, next) => {
   // 大類別
@@ -68,7 +67,37 @@ router.get('/prdCate', async (req, res, next) => {
   //   switch (v.parent_id)
   // });
 
-
   res.json({ majorPrdSel, subPrdSel });
+});
+
+router.get('/detail/:prdId', async (req, res, next) => {
+  // 商品名稱
+  let [detailData] = await pool.execute(
+    'SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.main_img, prd_list.disc, prd_type1_detail.cate_m, prd_type1_detail.cate_s, prd_list.rate, prd_type1_detail.brand,prd_type1_detail.capacity, prd_origin.name AS originName FROM prd_list JOIN prd_type1_detail on prd_list.id = prd_type1_detail.prd_id JOIN prd_origin ON prd_type1_detail.origin = prd_origin.id WHERE prd_list.id = ?',
+    [req.params.prdId]
+  );
+  // console.log(detailData);
+
+  console.log(detailData[0].cate_m);
+  console.log(detailData[0].cate_s);
+
+  let [cateMNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_m]);
+  let cateMName = cateMNameData[0].name;
+  let [cateSNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_s]);
+  let cateSName = cateSNameData[0].name;
+
+  detailData[0] = { ...detailData[0], cateMName, cateSName };
+
+  let [detailImgData] = await pool.execute('SELECT url  FROM `prd_img` WHERE prd_id = ?', [req.params.prdId]);
+  // console.log(detailImgData);
+
+  // detailImgData.unshift(url: detailData[0].main_img);
+
+  let detailImgList = [detailData[0].main_img];
+  for (i = 0; i < detailImgData.length; i++) {
+    detailImgList.push(detailImgData[i].url);
+  }
+
+  res.json({ detailData: [detailData[0]], detailImgList });
 });
 module.exports = router;
