@@ -81,8 +81,10 @@ router.get('/detail/:prdId', async (req, res, next) => {
   console.log(detailData[0].cate_m);
   console.log(detailData[0].cate_s);
 
+  // 中分類的 prd_detail_cate 的 Name (cate_m)
   let [cateMNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_m]);
   let cateMName = cateMNameData[0].name;
+  // 小分類的 prd_detail_cate 的 Name (cate_s)
   let [cateSNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_s]);
   let cateSName = cateSNameData[0].name;
 
