@@ -56,6 +56,20 @@ router.post('/', async (req, res) => {
         'INSERT INTO `order_detail` (`order_id`, `prd_id`, `price`, `amount`, `subtotal`, `is_review`, `is_packaging`, `packaging_cate`) VALUES (?, ?, ?, ?, ?, 1, 0, 1)',
         [orderId, cartList[i].prdId, cartList[i].price, cartList[i].amount, cartList[i].subTotal]
       );
+
+      // 更新銷售數量、庫存
+      let [oldPrd] = await pool.execute('SELECT inventory_quantity, sale_quantity FROM prd_list WHERE id = ?', [cartList[i].prdId]);
+      let newInventoryNum = Number(oldPrd[0].inventory_quantity) - 1;
+      let newSaleNum = Number(oldPrd[0].sale_quantity) + 1;
+      if (newInventoryNum <= 0) {
+        let [updPrdSale] = await pool.execute('UPDATE prd_list SET inventory_quantity = ?, sale_quantity = ?, status = 2 WHERE id= ?', [
+          newInventoryNum,
+          newSaleNum,
+          cartList[i].prdId,
+        ]);
+      } else {
+        let [updPrdSale] = await pool.execute('UPDATE prd_list SET inventory_quantity = ?, sale_quantity = ? WHERE id= ?', [newInventoryNum, newSaleNum, cartList[i].prdId]);
+      }
     }
   } catch (e) {
     console.log(e);

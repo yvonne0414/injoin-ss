@@ -110,9 +110,11 @@ router.get('/notreview', async (req, res) => {
   });
 });
 
-// 取得user 歷史商品評價
-router.get('/user', async (req, res) => {
-  let [review] = await pool.execute('SELECT * FROM prd_review WHERE user_id = ? ', [req.query.userId]);
+// 取得user 歷史商品評價列表
+router.get('/history', async (req, res) => {
+  let [review] = await pool.execute('SELECT prd_review.*, prd_list.name FROM prd_review JOIN prd_list on prd_review.prd_id=prd_list.id WHERE prd_review.user_id = ? ', [
+    req.query.userId,
+  ]);
   console.log(review);
 
   let data = [];
@@ -129,7 +131,7 @@ router.get('/user', async (req, res) => {
   res.json({ data });
 });
 
-// TODO: 取得商品評價
+// 取得商品評價列表
 router.get('/:prdId', async (req, res) => {
   let [prdReview] = await pool.execute(
     'SELECT prd_review.id, prd_review.user_id, user_list.name, user_list.user_img, prd_review.rating, prd_review.content, order_list.order_time FROM prd_review JOIN user_list on prd_review.user_id = user_list.id JOIN order_list on prd_review.order_id = order_list.id WHERE prd_id = ?',
