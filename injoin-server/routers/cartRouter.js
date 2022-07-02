@@ -8,9 +8,9 @@ const path = require('path');
 
 /* GET products listing. */
 router.get('/', async (req, res, next) => {
-  console.log('hi~',req.body);
-  console.log(req.params);
-  console.log(req.query);
+  // console.log(req.body);
+  // console.log(req.params);
+  // console.log(req.query);
 });
 
-module.exports = router;
+module.exports =router;

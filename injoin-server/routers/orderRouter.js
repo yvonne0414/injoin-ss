@@ -14,7 +14,7 @@ router.use('/detail/:orderId', async (req, res, next) => {
   console.log(req.params);
   // console.log(req.query);
   let [orderUser] = await pool.execute(
-    `SELECT user_list.id, user_list.name, user_list.phone, user_list.email, user_list.address_country, user_list.address, tw_county.name as countyName FROM user_list JOIN order_list ON user_list.id = order_list.user_id JOIN tw_county ON user_list.address_country = tw_county.code WHERE order_list.id = ?`,
+    `SELECT user_list.id, user_list.name, user_list.phone, user_list.email, user_list.address_country, user_list.address_detail, tw_county.name as countyName FROM user_list JOIN order_list ON user_list.id = order_list.user_id JOIN tw_county ON user_list.address_country = tw_county.code WHERE order_list.id = ?`,
     [req.params.orderId]
   );
   // console.log(orderUser);
@@ -49,7 +49,7 @@ router.get('/', async (req, res, next) => {
 
   // 抓資料
   let [allData, fields] = await pool.execute(
-    `SELECT order_list.*, user_list.name as userName, user_list.phone as userPhone, user_list.email as userEmail, user_list.address as userAddress, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_list.user_id = ? AND order_list.logistics_state = ? `,
+    `SELECT order_list.*, user_list.name as userName, user_list.phone as userPhone, user_list.email as userEmail, user_list.address_detail as userAddress, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_list.user_id = ? AND order_list.logistics_state = ? `,
     [userId, logisticsState]
   );
   // 總數
@@ -65,7 +65,7 @@ router.get('/', async (req, res, next) => {
 
   // 取得這一頁的資料 select * from table limit ? offet ?
   let [pageData] = await pool.execute(
-    'SELECT order_list.*, user_list.name as userName, user_list.phone as userPhone, user_list.email as userEmail, user_list.address as userAddress, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_list.user_id = ? AND order_list.logistics_state = ? ORDER BY order_list.order_time DESC LIMIT ? OFFSET ?',
+    'SELECT order_list.*, user_list.name as userName, user_list.phone as userPhone, user_list.email as userEmail, user_list.address_detail as userAddress, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_list.user_id = ? AND order_list.logistics_state = ? ORDER BY order_list.order_time DESC LIMIT ? OFFSET ?',
     [userId, logisticsState, perPage, offset]
   );
 
