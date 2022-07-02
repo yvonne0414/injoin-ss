@@ -101,7 +101,7 @@ router.get('/prdCate', async (req, res, next) => {
   let [thirdPrdSelData] = await pool.execute('SELECT * FROM `prd_detail_cate` WHERE level = 3');
   let majorPrdSel = [];
   let subPrdSel = [[], [], [], []];
-  let thirdPrdSel = [];
+  let thirdPrdSel = [[], [], [], [], [], [], [], []];
   console.log(majorPrdSelData);
   majorPrdSel = majorPrdSelData.map((v, i) => {
     console.log(v);
@@ -125,9 +125,13 @@ router.get('/prdCate', async (req, res, next) => {
         break;
     }
   });
-  // thirdPrdSel.map((v) => {
-  //   switch (v.parent_id)
-  // });
+  thirdPrdSelData.map((v) => {
+    switch (v.parent_id) {
+      case 1:
+        thirdPrdSel[0].push(v.name);
+        break;
+    }
+  });
 
   res.json({ majorPrdSel, subPrdSel });
 });
