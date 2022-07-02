@@ -25,6 +25,18 @@ router.get('/', async (req, res, next) => {
     //加第三個(c) obj.c=3
     //結果 obj {a:0, b:1, c:3}
     data[index].material = data2Arr;
+
+    //基酒nav
+    let [data3] = await pool.execute('SELECT * FROM bartd_material WHERE  bartd_id =?', [data[index].id]);
+    // console.log(data3);
+    let data3Arr = [];
+    data3Arr = data3.map((v, i) => {
+      console.log(v);
+      if (v.mater_cate_l == 1) {
+        return v.mater_cate_m;
+      }
+    });
+    data[index].mater_cate_m = data3Arr;
   }
 
   // 想要的結果
@@ -38,9 +50,9 @@ router.get('/type', async (req, res, next) => {
   let [subSelData] = await pool.execute('SELECT * FROM `bartd_cate_type` WHERE level = 2');
   let majorSel = [];
   let subSel = [[], [], [], []];
-  console.log(subSelData);
+  // console.log(subSelData);
   majorSel = majorSelData.map((v, i) => {
-    console.log(v);
+    // console.log(v);
     return v.name;
   });
   subSelData.map((v) => {
@@ -59,15 +71,59 @@ router.get('/type', async (req, res, next) => {
         break;
     }
   });
-  console.log(majorSel);
-  console.log(subSel);
+  // console.log(majorSel);
+  // console.log(subSel);
 
   // data:{cate:[],content:[[],[]]}
   res.json({ data: { majorSel, subSel } });
 });
 
-// router.get('/:bartd_listID', async (req, res, next) => {
-//   let [data] = await pool.execute('SELECT * FROM `bartd_list` WHERE id = ' + req.params.bartd_listID);
-//   res.json(data);
-// });
+//篩選
+router.get('/bartdtype', async (req, res, next) => {
+  let [typem] = await pool.execute('SELECT * FROM bartd_cate_list JOIN bartd_cate_type ON bartd_cate_list.bartd_cate_id_m = bartd_cate_type.id');
+  let [types] = await pool.execute('SELECT * FROM bartd_cate_list JOIN bartd_cate_type ON bartd_cate_list.bartd_cate_id_s = bartd_cate_type.id');
+  res.json({ typem, types });
+});
+
+//搜尋
+router.get('/search', async (req, res, next) => {
+  console.log(req.query.keyword);
+  let [data] = await pool.execute('SELECT * FROM bartd_list WHERE bartd_list.name LIKE ?', [`%${req.query.keyword}%`]);
+  res.json(data);
+});
+
+//細節頁(取id);
+router.get('/detail/:barId', async (req, res, next) => {
+  // console.log(req.params.barId);
+  //bartd_list
+  let [data] = await pool.execute('SELECT * FROM bartd_list WHERE id = ?', [req.params.barId]);
+  //console.log(data);
+
+  //bartd_material(材料)
+  for (let index = 0; index < data.length; index++) {
+    let [data2] = await pool.execute('SELECT * FROM bartd_material WHERE bartd_id =?', [data[index].id]);
+    let materialArr = [];
+    materialArr = data2.map((v, i) => {
+      // console.log(v);
+      return v.name;
+    });
+    data[index].material = materialArr;
+
+    //容量
+    let materAmountArr = [];
+    materAmountArr = data2.map((v, i) => {
+      // console.log(v);
+      return v.mater_amount;
+    });
+    data[index].mater_amount = materAmountArr;
+    // let materialAll = [...materAmountArr, ...mater_amount];
+    // data[index].materialAll = materialAll;
+  }
+
+  if (data.legth === 0) {
+    res.status(404).json(data);
+  } else {
+    res.json(data);
+  }
+});
 module.exports = router;
