@@ -100,12 +100,12 @@ router.post('/register', uploader.single('userphoto'), registerRules, async (req
   // 圖片處理完成後
   // console.log('req.file', req.file);
   // 有給照片就留 沒給就給其他的 ?
-  let photo = req.file ? '/members/' + req.file.filename : '';
+  let photo = req.file ? '/members/' + req.file.filename : req.body.usergender === 'F' ? '/userimgs/user_defult_f.png' : '/userimgs/user_defult_m.png';
 
   // http://localhost:3001/images + /members/Photoname
   // save to db
   // 寫進 user_list 目前止寫入 name email user_img
-  let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img,gender,birth_day) VALUE (?,?,?,?,?)', [
+  let [result] = await pool.execute('INSERT INTO user_list (name,email,user_img,gender,birth_day,address_country, phone, vip_level) VALUE (?,?,?,?,?,1,"",1)', [
     req.body.username,
     req.body.useremail,
     photo,
@@ -157,7 +157,7 @@ router.post('/login', async (req, res, next) => {
   // console.log(returnMemver)
   req.session.member = returnMemver;
 
-  res.json({ code: 0, result: 'success' });
+  res.json({ code: 0, result: returnMemver });
 });
 
 router.post('/changepwd', async (req, res, next) => {
@@ -196,7 +196,9 @@ router.get('/about/:userid', async (req, res, next) => {
 router.get('/logout', (req, res, next) => {
   // 因為我們會依靠判斷 req.session.member 有沒有資料來當作有沒有登入
   // 所以當我們把 req.session.member 設定成 null，那就登出了
-  req.session.member = null;
+  req.session.destroy()
+  res.clearCookie('connect.sid')
+
   res.status(202).json({ code: 0, error: 'log out' });
 });
 

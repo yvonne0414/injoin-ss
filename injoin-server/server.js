@@ -63,6 +63,7 @@ app.use('/images', express.static(path.join(__dirname, 'public')));
 
 // RESTful API
 app.get('/', (req, res) => {
+  // console.log(req.session);
   res.send('home');
 });
 
@@ -77,6 +78,22 @@ app.use('/api/bar', BarRouter);
 // 揪團
 const GroupRouter = require('./routers/groupRouter');
 app.use('/api/group', GroupRouter);
+
+// 評價
+const ReputationRouter = require('./routers/reputationRouter');
+app.use('/api/reputation', ReputationRouter);
+
+// 訂單
+const OrderRouter = require('./routers/orderRouter');
+app.use('/api/order', OrderRouter);
+
+// 購物車
+const CartRouter = require('./routers/cartRouter');
+app.use('/api/cart', CartRouter);
+
+// 優惠券
+const CouponRouter = require('./routers/couponRouter');
+app.use('/api/coupon', CouponRouter);
 
 // 註冊登入
 const AuthRouter = require('./routers/authRouter');

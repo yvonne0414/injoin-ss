@@ -96,7 +96,7 @@ router.get('/list', async (req, res, next) => {
   let groupCate = req.query.groupCate;
   // 抓資料
   let [allData, fields] = await pool.execute(
-    `SELECT group_list.*, user_list.name as username, tw_county.name as cityName FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code WHERE group_list.is_official =?`,
+    `SELECT group_list.*, user_list.name as username, tw_county.name as cityName FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code WHERE group_list.is_official =? AND group_list.status < 4 AND group_list.status > 0`,
     [groupCate]
   );
   // 總數
@@ -111,7 +111,7 @@ router.get('/list', async (req, res, next) => {
 
   // 取得這一頁的資料 select * from table limit ? offet ?
   let [pageData] = await pool.execute(
-    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id WHERE group_list.is_official =? ORDER BY start_time DESC LIMIT ? OFFSET ?',
+    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id WHERE group_list.is_official =? AND group_list.status < 4 AND group_list.status > 0 ORDER BY start_time DESC LIMIT ? OFFSET ?',
     [groupCate, perPage, offset]
   );
 
@@ -394,7 +394,8 @@ router.post('/checkmember/:groupId', async (req, res) => {
   // response
   res.json({ code: 0, result: 'OK' });
 });
-// TODO: 聊天室
+
+// 聊天室
 // 聊天歷史資料
 router.get('/chat/:groupId', async (req, res) => {
   let [allChat] = await pool.execute(

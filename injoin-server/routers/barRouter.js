@@ -2,6 +2,52 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../utils/db');
 
+// for image upload
+const multer = require('multer');
+const path = require('path');
+
+// 圖片上傳需要地方放，在 public 裡，建立了 uploads 檔案夾
+// 設定圖片儲存的位置
+const storage = multer.diskStorage({
+  // 設定儲存的目的地 （檔案夾）
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '..', 'public', 'bartending'));
+  },
+  // 重新命名使用者上傳的圖片名稱
+  filename: function (req, file, cb) {
+    let ext = file.originalname.split('.').pop();
+    let newFilename = `${Date.now()}.${ext}`;
+    cb(null, newFilename);
+    // {
+    //   fieldname: 'photo',
+    //   originalname: 'japan04-200.jpg',
+    //   encoding: '7bit',
+    //   mimetype: 'image/jpeg'
+    // }
+  },
+});
+const uploader = multer({
+  // 設定儲存的位置
+  storage: storage,
+  // 過濾圖片
+  // 可以想成是 photo 這個欄位的「資料驗證」
+  fileFilter: function (req, file, cb) {
+    // console.log(file);
+    if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/jpg' && file.mimetype !== 'image/png' && file.mimetype !== 'image/svg+xml') {
+      cb('這些是不被接受的格式', false);
+    } else {
+      // cb(錯誤, 結果)
+      cb(null, true);
+    }
+  },
+  // 檔案尺寸的過濾
+  // 一般不會上傳太大的圖片尺寸，以免到時候前端開啟得很慢
+  limits: {
+    // 1k = 1024
+    fileSize: 500 * 1024,
+  },
+});
+
 //酒譜列表
 router.get('/', async (req, res, next) => {
   // TODO: 抓出有哪些酒譜
@@ -125,5 +171,61 @@ router.get('/detail/:barId', async (req, res, next) => {
   } else {
     res.json(data);
   }
+// router.get('/:bartd_listID', async (req, res, next) => {
+//   let [data] = await pool.execute('SELECT * FROM `bartd_list` WHERE id = ' + req.params.bartd_listID);
+//   res.json(data);
+// });
+
+// 新增酒譜
+// TODO: formData arr待解決
+router.post('/', uploader.single('bartdImg'), async (req, res) => {
+  let name = req.body.name;
+  let img = req.file ? '/bartending/' + req.file.filename : '';
+  let recipe = req.body.recipe;
+  let materialList = req.body.materialList;
+  let bartdCateList = req.body.bartdCateList;
+  // console.log('data', { name, img, recipe, materialList, bartdCateList });
+  materialList = materialList.split(',\n');
+  // console.log(materialList);
+  materialList = materialList.toString();
+  // console.log(materialList);
+  // console.log(materialList.split('br'));
+  // console.log(JSON.parse(materialList.split('br')[0]));
+  materialList = materialList.split('br').map((item) => {
+    return JSON.parse(item);
+  });
+  console.log(materialList);
+
+  bartdCateList = bartdCateList.split(',\n');
+  bartdCateList = bartdCateList.toString();
+  bartdCateList = bartdCateList.split('br').map((item) => {
+    return JSON.parse(item);
+  });
+  console.log(bartdCateList);
+
+  // bartd_list
+  let [bartdListResult] = await pool.execute('INSERT INTO bartd_list (name, img, recipe) VALUES (?, ?, ?)', [name, img, recipe]);
+
+  // bartd_material
+  for (i = 0; i < materialList.length; i++) {
+    let [bartdLMaterialResult] = await pool.execute('INSERT INTO bartd_material (bartd_id, name, mater_amount, mater_cate_l, mater_cate_m) VALUES (?, ?, ?, ?, ?)', [
+      bartdListResult.insertId,
+      materialList[i].name,
+      materialList[i].materAmount,
+      materialList[i].materCateL,
+      materialList[i].materCateL,
+    ]);
+  }
+
+  // bartd_cate_list
+  for (i = 0; i < bartdCateList.length; i++) {
+    let [bartdCateResult] = await pool.execute('INSERT INTO bartd_cate_list (bartd_id, bartd_cate_id_m, bartd_cate_id_s) VALUES (?, ?, ?)', [
+      bartdListResult.insertId,
+      bartdCateList[i].bartdMaterCateM,
+      bartdCateList[i].bartdMaterCateS,
+    ]);
+  }
+
+  res.json({ code: 0, result: 'ok' });
 });
 module.exports = router;
