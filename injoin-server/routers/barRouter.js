@@ -171,6 +171,7 @@ router.get('/detail/:barId', async (req, res, next) => {
   } else {
     res.json(data);
   }
+});
 // router.get('/:bartd_listID', async (req, res, next) => {
 //   let [data] = await pool.execute('SELECT * FROM `bartd_list` WHERE id = ' + req.params.bartd_listID);
 //   res.json(data);

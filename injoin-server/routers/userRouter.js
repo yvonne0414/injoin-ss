@@ -2,25 +2,21 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../utils/db');
 
-// 刪除最愛商品
-// /api/userlike/del/使用者id/商品id
-router.get('/del/:user_id/:prd_id', async (req, res, next) => {
-  let [data] = await pool.execute('DELETE FROM user_like WHERE user_id =? AND prd_id=?', [req.params.user_id, req.params.prd_id]);
-  // console.log(data);
-  res.json({ code: 0, message: '刪除成功' });
-});
 
-// 加入最愛商品
-// /api/userlike/add/使用者id/商品id
-router.get('/add/:user_id/:prd_id', async (req, res, next) => {
-  let [data] = await pool.execute(
-    `INSERT INTO user_like(user_id, prd_id) VALUES (?,?)
-  `,
-    [req.params.user_id, req.params.prd_id]
-  );
-  // console.log(data);
-  res.json({ code: 0, message: '加入成功' });
-});
+// 加入調酒最
+// /api/userlike/bartd/add?bartdid=1
+router.get("/bartd/:userid/add", async(req,res,next)=>{
+  // console.log(req.params.userid,req.query.bartdid);
+  let [data] = await pool.execute('INSERT INTO `user_bartd_like`(`user_id`, `bartd_id`) VALUES (?,?)',[req.params.userid,req.query.bartdid])
+  res.json({code:0, message:"加入成功"})
+})
+
+// 刪除調酒最
+// /api/userlike/bartd/del?bartdid=1
+router.get ("/bartd/:userid/del",async(req,res,next)=>{
+  let [data] = await pool.execute("DELETE FROM user_bartd_like WHERE user_bartd_like.user_id=? AND user_bartd_like.bartd_id = ?",[req.params.userid,req.query.bartdid])
+  res.json({ code: 0, message: '刪除成功' });
+})
 
 // 調酒最愛
 // /api/userlike/bartd
@@ -50,16 +46,14 @@ router.get('/bartd/:user_id', async (req, res, next) => {
   for (let index = 0; index < data3.length; index++) {
     let bartd_id = data3[index].id;
     [data2] = await pool.execute('SELECT * FROM `bartd_material` WHERE bartd_material.bartd_id=?', [bartd_id]);
-    // console.log(data);
+
     let string = '';
     for (let j = 0; j < data2.length; j++) {
       string = `${string} ${data2[j].name}`;
     }
-    // console.log(data[index]);
+
     data3[index] = { ...data3[index], material: string };
 
-    // console.log(data3[index]);
-    // console.log(data3);
   }
 
   res.json({
@@ -70,6 +64,26 @@ router.get('/bartd/:user_id', async (req, res, next) => {
     },
     data: data3,
   });
+});
+
+// 刪除最愛商品
+// /api/userlike/del/使用者id/商品id
+router.get('/del/:user_id/:prd_id', async (req, res, next) => {
+  let [data] = await pool.execute('DELETE FROM user_like WHERE user_id =? AND prd_id=?', [req.params.user_id, req.params.prd_id]);
+  // console.log(data);
+  res.json({ code: 0, message: '刪除成功' });
+});
+
+// 加入最愛商品
+// /api/userlike/add/使用者id/商品id
+router.get('/add/:user_id/:prd_id', async (req, res, next) => {
+  let [data] = await pool.execute(
+    `INSERT INTO user_like(user_id, prd_id) VALUES (?,?)
+  `,
+    [req.params.user_id, req.params.prd_id]
+  );
+  // console.log(data);
+  res.json({ code: 0, message: '加入成功' });
 });
 
 // 我的最愛
