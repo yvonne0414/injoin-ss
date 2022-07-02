@@ -52,8 +52,13 @@ const uploader = multer({
 router.get('/', async (req, res, next) => {
   // TODO: 抓出有哪些酒譜
   let [data] = await pool.execute('SELECT * FROM `bartd_list`');
+  console.log(data);
+  
 
   for (let index = 0; index < data.length; index++) {
+
+
+
     // console.log(data[index]);
     // TODO: 從id去抓各個酒譜有哪些材料(data: for loop)
     let [data2] = await pool.execute('SELECT * FROM bartd_material WHERE bartd_id =?', [data[index].id]);
