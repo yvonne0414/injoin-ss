@@ -140,6 +140,44 @@ router.get('/search', async (req, res, next) => {
 });
 
 //細節頁(取id);
+// router.get('/detail/:barId', async (req, res, next) => {
+//   // console.log(req.params.barId);
+//   //bartd_list
+//   let [data] = await pool.execute('SELECT * FROM bartd_list WHERE id = ?', [req.params.barId]);
+//   //console.log(data);
+
+//   //bartd_material(材料)
+//   for (let index = 0; index < data.length; index++) {
+//     let [data2] = await pool.execute('SELECT * FROM bartd_material WHERE bartd_id =?', [data[index].id]);
+//     let materialArr = [];
+//     materialArr = data2.map((v, i) => {
+//       // console.log(v);
+//       return v.name;
+//     });
+//     data[index].material = materialArr;
+
+//     //容量
+//     let materAmountArr = [];
+//     materAmountArr = data2.map((v, i) => {
+//       // console.log(v);
+//       return v.mater_amount;
+//     });
+//     data[index].mater_amount = materAmountArr;
+//     // let materialAll = [...materAmountArr, ...mater_amount];
+//     // data[index].materialAll = materialAll;
+//   }
+
+//   if (data.legth === 0) {
+//     res.status(404).json(data);
+//   } else {
+//     res.json(data);
+//   }
+// });
+// router.get('/:bartd_listID', async (req, res, next) => {
+//   let [data] = await pool.execute('SELECT * FROM `bartd_list` WHERE id = ' + req.params.bartd_listID);
+//   res.json(data);
+// });
+
 router.get('/detail/:barId', async (req, res, next) => {
   // console.log(req.params.barId);
   //bartd_list
@@ -147,36 +185,22 @@ router.get('/detail/:barId', async (req, res, next) => {
   //console.log(data);
 
   //bartd_material(材料)
-  for (let index = 0; index < data.length; index++) {
-    let [data2] = await pool.execute('SELECT * FROM bartd_material WHERE bartd_id =?', [data[index].id]);
-    let materialArr = [];
-    materialArr = data2.map((v, i) => {
-      // console.log(v);
-      return v.name;
-    });
-    data[index].material = materialArr;
+  let [data2] = await pool.execute('SELECT * FROM bartd_material WHERE bartd_id =?', [req.params.barId]);
 
-    //容量
-    let materAmountArr = [];
-    materAmountArr = data2.map((v, i) => {
-      // console.log(v);
-      return v.mater_amount;
-    });
-    data[index].mater_amount = materAmountArr;
-    // let materialAll = [...materAmountArr, ...mater_amount];
-    // data[index].materialAll = materialAll;
-  }
+  let cateMList = [];
+  data2.map((item) => {
+    cateMList.push(item.mater_cate_m);
+  });
+  cateMList = [...new Set(cateMList)];
+
+  let newdata = { ...data, material: data2, cateMList };
 
   if (data.legth === 0) {
     res.status(404).json(data);
   } else {
-    res.json(data);
+    res.json(newdata);
   }
 });
-// router.get('/:bartd_listID', async (req, res, next) => {
-//   let [data] = await pool.execute('SELECT * FROM `bartd_list` WHERE id = ' + req.params.bartd_listID);
-//   res.json(data);
-// });
 
 // 分類
 router.get('/cateL', async (req, res) => {
@@ -189,7 +213,6 @@ router.get('/cateM', async (req, res) => {
 });
 
 // 新增酒譜
-// TODO: formData arr待解決
 router.post('/', uploader.single('bartdImg'), async (req, res) => {
   let name = req.body.name;
   let img = req.file ? '/bartending/' + req.file.filename : '';
@@ -228,7 +251,7 @@ router.post('/', uploader.single('bartdImg'), async (req, res) => {
       materialList[i].name,
       materialList[i].materAmount,
       materialList[i].materCateL,
-      materialList[i].materCateL,
+      materialList[i].materCateM,
     ]);
   }
 
