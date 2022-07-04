@@ -60,10 +60,12 @@ router.get('/', async (req, res, next) => {
     let [data2] = await pool.execute('SELECT * FROM bartd_material WHERE bartd_id =?', [data[index].id]);
     // console.log(data2);
     //把[1,2,3] ==> '1 2 3' 把材料處理成需要的格式
-    let data2Arr = '';
+    // let data2Arr = '';
+    let data2Arr = [];
     for (let index = 0; index < data2.length; index++) {
       // console.log(data2[index].name);
-      data2Arr = `${data2Arr} ${data2[index].name}`;
+      // data2Arr = `${data2Arr} ${data2[index].name}`;
+      data2Arr.push(data2[index].name);
     }
     // TODO: 把材料存入各id的{}
     // console.log(data2Arr);
@@ -210,6 +212,35 @@ router.get('/cateL', async (req, res) => {
 router.get('/cateM', async (req, res) => {
   let [cateM] = await pool.execute('SELECT id, name FROM `bartd_cate_type` WHERE level = 2 AND parent_id = ?', [req.query.cateL]);
   res.json({ data: cateM });
+});
+
+// 相關酒譜
+router.get(`/related`, async (req, res) => {
+  let [barIdList] = await pool.execute(`SELECT bartd_id FROM bartd_material WHERE mater_cate_m = ?`, [req.query.cateM]);
+  let newbarIdList = [];
+  barIdList.map((item) => {
+    // console.log(item);
+    newbarIdList.push(item.bartd_id);
+  });
+  newbarIdList = [...new Set(newbarIdList)];
+  console.log(newbarIdList);
+
+  let data = [];
+
+  for (let i = 0; i < newbarIdList.length; i++) {
+    let [barList] = await pool.execute(`SELECT id, name,img FROM bartd_list WHERE id = ?`, [newbarIdList[i]]);
+    let [materList] = await pool.execute(`SELECT * FROM bartd_material WHERE bartd_id = ?`, [newbarIdList[i]]);
+    let materNameList = [];
+    materList.map((item) => {
+      materNameList.push(item.name);
+    });
+    data.push({
+      ...barList[0],
+      material: materNameList,
+    });
+  }
+
+  res.json({ data });
 });
 
 // 新增酒譜
