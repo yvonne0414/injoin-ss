@@ -38,7 +38,7 @@ app.use(
     // 為了要讓 browser 在 CORS 的情況下，還是幫我們縙 cookie
     // 這邊需要把 credentials 設定成 true，而且 origin 不可以是 *
     // 不然就太恐怖，誰都可以跨源讀寫 cookie
-    origin: ['http://localhost:3000'],
+    origin: ['http://localhost:3000', 'http://localhost:3002'],
     credentials: true,
   })
 );
@@ -145,7 +145,7 @@ const { default: axios } = require('axios');
 // const io = socket(server);
 const io = require('socket.io')(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'http://localhost:3002'],
     methods: ['GET', 'POST'],
     allowedHeaders: ['my-custom-header'],
     credentials: true,

@@ -62,7 +62,7 @@ const multi_upload = multer({
       return cb(err);
     }
   },
-}).array('prdImg', 3);
+}).array('prdImg[]', 5);
 
 router.get('/prdList', async (req, res, next) => {
   // 當前頁面
@@ -169,9 +169,30 @@ router.get('/detail/:prdId', async (req, res, next) => {
   res.json({ detailData: [detailData[0]], detailImgList });
 });
 
+// 類別
+router.get('/cateL', async (req, res) => {
+  let [cateL] = await pool.execute('SELECT id, name FROM `prd_detail_cate` WHERE level = 1');
+  res.json({ data: cateL });
+});
+router.get('/cateM', async (req, res) => {
+  let [cateM] = await pool.execute('SELECT id, name FROM `prd_detail_cate` WHERE level = 2 AND parent_id = ?', [req.query.cateL]);
+  res.json({ data: cateM });
+});
+router.get('/cateS', async (req, res) => {
+  let [cateS] = await pool.execute('SELECT id, name FROM `prd_detail_cate` WHERE level = 3 AND parent_id = ?', [req.query.cateM]);
+  res.json({ data: cateS });
+});
+
+// 材質
+router.get('/material', async (req, res) => {
+  let [material] = await pool.execute('SELECT * FROM `prd_material_cate`');
+  res.json({ data: material });
+});
+
 // 新增商品
 router.post('/', async (req, res) => {
   multi_upload(req, res, async function (err) {
+    console.log(req.body);
     if (err instanceof multer.MulterError) {
       // A Multer error occurred when uploading.
       res
