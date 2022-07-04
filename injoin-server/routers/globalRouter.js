@@ -16,4 +16,10 @@ router.get('/origin', async (req, res, next) => {
   res.json({ data });
 });
 
+// 會員等級
+router.get('/viplevel', async (req, res, next) => {
+  let [data, fields] = await pool.execute('SELECT * FROM `vip_level` WHERE id > 0');
+  // console.log(data);
+  res.json({ data });
+});
 module.exports = router;
