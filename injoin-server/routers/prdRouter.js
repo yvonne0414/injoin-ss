@@ -189,6 +189,40 @@ router.get('/material', async (req, res) => {
   res.json({ data: material });
 });
 
+// 相關商品
+router.get(`/related/:prdId`, async (req, res) => {
+  let cateM = req.query.cateM;
+  let prdId = req.params.prdId;
+  console.log(prdId);
+  try {
+    let [type1res] = await pool.execute(
+      `SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.rate, prd_list.main_img FROM prd_list JOIN prd_type1_detail ON  prd_list.id = prd_type1_detail.prd_id  WHERE cate_m = ? AND prd_list.status = 1`,
+      [cateM]
+    );
+    let [type2res] = await pool.execute(
+      `SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.rate, prd_list.main_img FROM prd_list JOIN prd_type2_detail ON  prd_list.id = prd_type2_detail.prd_id  WHERE cate_m = ? AND prd_list.status = 1`,
+      [cateM]
+    );
+    let [type3res] = await pool.execute(
+      `SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.rate , prd_list.main_img FROM prd_list JOIN prd_type3_detail ON  prd_list.id = prd_type3_detail.prd_id  WHERE cate_m = ? AND prd_list.status = 1`,
+      [cateM]
+    );
+    let data = [];
+    type1res.map((item) => {
+      Number(prdId) !== item.id && data.push(item);
+    });
+    type2res.map((item) => {
+      Number(prdId) !== item.id && data.push(item);
+    });
+    type3res.map((item) => {
+      Number(prdId) !== item.id && data.push(item);
+    });
+    res.json({ data: data });
+  } catch (e) {
+    console.error(e);
+  }
+});
+
 // 新增商品
 router.post('/', async (req, res) => {
   multi_upload(req, res, async function (err) {
