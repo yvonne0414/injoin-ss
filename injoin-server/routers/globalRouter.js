@@ -13,7 +13,7 @@ router.get('/cityoptions', async (req, res, next) => {
 router.get('/origin', async (req, res, next) => {
   let [data, fields] = await pool.execute('SELECT * FROM `prd_origin`');
   // console.log(data);
-  res.json(data);
+  res.json({ data });
 });
 
 module.exports = router;
