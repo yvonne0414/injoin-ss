@@ -53,12 +53,8 @@ router.get('/', async (req, res, next) => {
   // TODO: 抓出有哪些酒譜
   let [data] = await pool.execute('SELECT * FROM `bartd_list`');
   console.log(data);
-  
 
   for (let index = 0; index < data.length; index++) {
-
-
-
     // console.log(data[index]);
     // TODO: 從id去抓各個酒譜有哪些材料(data: for loop)
     let [data2] = await pool.execute('SELECT * FROM bartd_material WHERE bartd_id =?', [data[index].id]);
@@ -182,6 +178,16 @@ router.get('/detail/:barId', async (req, res, next) => {
 //   res.json(data);
 // });
 
+// 分類
+router.get('/cateL', async (req, res) => {
+  let [cateL] = await pool.execute('SELECT id, name FROM `bartd_cate_type` WHERE level = 1');
+  res.json({ data: cateL });
+});
+router.get('/cateM', async (req, res) => {
+  let [cateM] = await pool.execute('SELECT id, name FROM `bartd_cate_type` WHERE level = 2 AND parent_id = ?', [req.query.cateL]);
+  res.json({ data: cateM });
+});
+
 // 新增酒譜
 // TODO: formData arr待解決
 router.post('/', uploader.single('bartdImg'), async (req, res) => {
@@ -191,22 +197,25 @@ router.post('/', uploader.single('bartdImg'), async (req, res) => {
   let materialList = req.body.materialList;
   let bartdCateList = req.body.bartdCateList;
   // console.log('data', { name, img, recipe, materialList, bartdCateList });
-  materialList = materialList.split(',\n');
+  // materialList = materialList.split(',\n');
   // console.log(materialList);
-  materialList = materialList.toString();
+  // materialList = materialList.toString();
   // console.log(materialList);
   // console.log(materialList.split('br'));
   // console.log(JSON.parse(materialList.split('br')[0]));
-  materialList = materialList.split('br').map((item) => {
-    return JSON.parse(item);
-  });
+  // materialList = materialList.split('br').map((item) => {
+  //   return JSON.parse(item);
+  // });
+  materialList = JSON.parse(materialList);
   console.log(materialList);
 
-  bartdCateList = bartdCateList.split(',\n');
-  bartdCateList = bartdCateList.toString();
-  bartdCateList = bartdCateList.split('br').map((item) => {
-    return JSON.parse(item);
-  });
+  // bartdCateList = bartdCateList.split(',\n');
+  // bartdCateList = bartdCateList.toString();
+  // bartdCateList = bartdCateList.split('br').map((item) => {
+  //   return JSON.parse(item);
+  // });
+  bartdCateList = JSON.parse(bartdCateList);
+
   console.log(bartdCateList);
 
   // bartd_list

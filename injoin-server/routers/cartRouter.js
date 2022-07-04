@@ -3,25 +3,23 @@ const router = express.Router();
 const pool = require('../utils/db');
 
 // /api/cart/getPrdDetail?prdId=2
-router.get("/getPrdDetail", async(req,res,next)=>{
+router.get('/getPrdDetail', async (req, res, next) => {
   // 防呆
-  prdId = req.query.prdId || 1
-  // console.log(prdId);
-  let [data]= await pool.execute("SELECT prd_list.id,prd_list.main_img AS cartprdImg, prd_list.prd_num AS cartprdNum, prd_list.name AS cartprdName , prd_list.price AS cartprdPrice FROM `prd_list` WHERE id = ?",[prdId])
-  // console.log(data);
-  res.json(data)
-})
-
+  prdId = req.query.prdId || 1;
+  console.log(prdId);
+  let [data] = await pool.execute(
+    'SELECT prd_list.id,prd_list.main_img AS cartprdImg, prd_list.prd_num AS cartprdNum, prd_list.name AS cartprdName , prd_list.price AS cartprdPrice FROM `prd_list` WHERE id = ?',
+    [prdId]
+  );
+  console.log(data);
+  res.json(data);
+});
 // router.get('/', async (req, res, next) => {
 //   let [data, fields] = await pool.execute(
 //     'SELECT order_list.*, user_list.name as userName, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id;'
 //   );
 //   res.json(data);
 // });
-
-
-
-
 
 // 訂單成立
 router.post('/', async (req, res) => {
@@ -67,7 +65,7 @@ router.post('/', async (req, res) => {
     // orderDetail: orderId / prd_id / amount / price / subtotal / is_review(0) / is_packaging(0) / packaging_cate(1)
     for (i = 0; i < cartList.length; i++) {
       let [detailResult] = await pool.execute(
-        'INSERT INTO `order_detail` (`order_id`, `prd_id`, `price`, `amount`, `subtotal`, `is_review`, `is_packaging`, `packaging_cate`) VALUES (?, ?, ?, ?, ?, 1, 0, 1)',
+        'INSERT INTO `order_detail` (`order_id`, `prd_id`, `price`, `amount`, `subtotal`, `is_review`, `is_packaging`, `packaging_cate`) VALUES (?, ?, ?, ?, ?, 0, 0, 1)',
         [orderId, cartList[i].prdId, cartList[i].price, cartList[i].amount, cartList[i].subTotal]
       );
 
