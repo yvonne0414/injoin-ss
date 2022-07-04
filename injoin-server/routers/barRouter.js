@@ -191,22 +191,25 @@ router.post('/', uploader.single('bartdImg'), async (req, res) => {
   let materialList = req.body.materialList;
   let bartdCateList = req.body.bartdCateList;
   // console.log('data', { name, img, recipe, materialList, bartdCateList });
-  materialList = materialList.split(',\n');
+  // materialList = materialList.split(',\n');
   // console.log(materialList);
-  materialList = materialList.toString();
+  // materialList = materialList.toString();
   // console.log(materialList);
   // console.log(materialList.split('br'));
   // console.log(JSON.parse(materialList.split('br')[0]));
-  materialList = materialList.split('br').map((item) => {
-    return JSON.parse(item);
-  });
+  // materialList = materialList.split('br').map((item) => {
+  //   return JSON.parse(item);
+  // });
+  materialList = JSON.parse(materialList);
   console.log(materialList);
 
-  bartdCateList = bartdCateList.split(',\n');
-  bartdCateList = bartdCateList.toString();
-  bartdCateList = bartdCateList.split('br').map((item) => {
-    return JSON.parse(item);
-  });
+  // bartdCateList = bartdCateList.split(',\n');
+  // bartdCateList = bartdCateList.toString();
+  // bartdCateList = bartdCateList.split('br').map((item) => {
+  //   return JSON.parse(item);
+  // });
+  materialList = JSON.parse(bartdCateList);
+
   console.log(bartdCateList);
 
   // bartd_list

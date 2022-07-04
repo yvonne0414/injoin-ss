@@ -2,9 +2,23 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../utils/db');
 
-// for image upload
-const multer = require('multer');
-const path = require('path');
+// /api/cart/getPrdDetail?prdId=2
+router.get("/getPrdDetail", async(req,res,next)=>{
+  // 防呆
+  prdId = req.query.prdId || 1
+  console.log(prdId);
+  let [data]= await pool.execute("SELECT prd_list.id,prd_list.main_img AS cartprdImg, prd_list.prd_num AS cartprdNum, prd_list.name AS cartprdName , prd_list.price AS cartprdPrice FROM `prd_list` WHERE id = ?",[prdId])
+  console.log(data);
+  res.json(data)
+})
+// router.get('/', async (req, res, next) => {
+//   let [data, fields] = await pool.execute(
+//     'SELECT order_list.*, user_list.name as userName, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id;'
+//   );
+//   res.json(data);
+// });
+
+
 
 // 訂單成立
 router.post('/', async (req, res) => {

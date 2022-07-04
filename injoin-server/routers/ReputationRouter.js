@@ -62,7 +62,7 @@ const multi_upload = multer({
       return cb(err);
     }
   },
-}).array('reviewImg', 2);
+}).array('reviewImg[]', 3);
 
 // 取得user 待評價訂單列表
 router.get('/notreview', async (req, res) => {
@@ -93,7 +93,7 @@ router.get('/notreview', async (req, res) => {
   for (i = 0; i < orderData.length; i++) {
     // 訂單細項
     let [orderDetailData] = await pool.execute(
-      `SELECT order_detail.id AS orderDetailId, order_detail.prd_id, order_detail.is_review, prd_list.name  FROM order_detail JOIN prd_list ON order_detail.prd_id = prd_list.id  WHERE order_id = ?`,
+      `SELECT order_detail.id AS orderDetailId, order_detail.prd_id, order_detail.is_review, prd_list.name, prd_list.main_img  FROM order_detail JOIN prd_list ON order_detail.prd_id = prd_list.id  WHERE order_id = ?`,
       [orderData[i].id]
     );
     toRateData.push({ ...orderData[i], orderDetailData });
@@ -106,16 +106,31 @@ router.get('/notreview', async (req, res) => {
       lastPage,
       page,
     },
-    toRateData,
+    data: toRateData,
   });
 });
 
 // 取得user 歷史商品評價列表
 router.get('/history', async (req, res) => {
-  let [review] = await pool.execute('SELECT prd_review.*, prd_list.name FROM prd_review JOIN prd_list on prd_review.prd_id=prd_list.id WHERE prd_review.user_id = ? ', [
+  let page = req.query.page || 1;
+  let [allReview] = await pool.execute('SELECT prd_review.*, prd_list.name FROM prd_review JOIN prd_list on prd_review.prd_id=prd_list.id WHERE prd_review.user_id = ?', [
     req.query.userId,
   ]);
-  console.log(review);
+  console.log(allReview);
+  // 總數
+  const total = allReview.length;
+
+  // 計算總頁數
+  const perPage = 5; // 每一頁有幾筆
+  const lastPage = Math.ceil(total / perPage);
+
+  // 計算要跳過幾筆）
+  let offset = (page - 1) * perPage;
+
+  let [review] = await pool.execute(
+    'SELECT prd_review.*, prd_list.name FROM prd_review JOIN prd_list on prd_review.prd_id=prd_list.id WHERE prd_review.user_id = ? ORDER BY id DESC LIMIT ? OFFSET ?',
+    [req.query.userId, perPage, offset]
+  );
 
   let data = [];
 
@@ -128,7 +143,14 @@ router.get('/history', async (req, res) => {
     data.push({ ...review[i], imgList });
   }
 
-  res.json({ data });
+  res.json({
+    pagination: {
+      total,
+      lastPage,
+      page,
+    },
+    data,
+  });
 });
 
 // 取得商品評價列表
@@ -178,6 +200,7 @@ router.post('/', async (req, res) => {
       }
       return;
     }
+    console.log(req.files);
 
     // save to db
     let [result] = await pool.execute('INSERT INTO prd_review (user_id, prd_id, order_id, content, rating) VALUES (?, ?, ?, ?, ?)', [
