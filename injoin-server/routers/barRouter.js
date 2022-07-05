@@ -249,6 +249,7 @@ router.get('/', async (req, res, next) => {
   let category = req.query.category;
   let cateS = Number(req.query.cateS) || 0;
   let keyword = req.query.keyword || '';
+  let userId = req.query.userId || -1;
 
   // 抓出有哪些酒譜
   let barIdList = [];
@@ -307,7 +308,14 @@ router.get('/', async (req, res, next) => {
       materialListData.map((mater) => {
         material.push(mater.name);
       });
-      newData.push({ ...data[i], material });
+
+      let isBarLike = false;
+      let [likeData] = await pool.execute(`SELECT * FROM user_bartd_like WHERE bartd_id = ? AND user_id = ?`, [data[i].id, userId]);
+      if (likeData.length > 0) {
+        isBarLike = true;
+      }
+
+      newData.push({ ...data[i], material, isLike: isBarLike });
     }
 
     pageData = newData;
@@ -325,7 +333,14 @@ router.get('/', async (req, res, next) => {
       materialListData.map((mater) => {
         material.push(mater.name);
       });
-      newData.push({ ...data[i], material });
+
+      let isBarLike = false;
+      let [likeData] = await pool.execute(`SELECT * FROM user_bartd_like WHERE bartd_id = ? AND user_id = ?`, [data[i].id, userId]);
+      if (likeData.length > 0) {
+        isBarLike = true;
+      }
+
+      newData.push({ ...data[i], material, isLike: isBarLike });
     }
 
     pageData = newData;
@@ -339,7 +354,14 @@ router.get('/', async (req, res, next) => {
       materialListData.map((mater) => {
         material.push(mater.name);
       });
-      newData.push({ ...data[i], material });
+
+      let isBarLike = false;
+      let [likeData] = await pool.execute(`SELECT * FROM user_bartd_like WHERE bartd_id = ? AND user_id = ?`, [data[i].id, userId]);
+      if (likeData.length > 0) {
+        isBarLike = true;
+      }
+
+      newData.push({ ...data[i], material, isLike: isBarLike });
     }
 
     pageData = newData;

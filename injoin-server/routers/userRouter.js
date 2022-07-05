@@ -30,7 +30,7 @@ router.get('/bartd/:user_id', async (req, res, next) => {
 
   const total = data.length;
   // 計算總頁數
-  const perPage = 8; // 每一頁有幾筆
+  const perPage = 4; // 每一頁有幾筆
   const lastPage = Math.ceil(total / perPage);
 
   // 計算要跳過幾筆）
@@ -97,7 +97,7 @@ router.get('/:userid', async (req, res, next) => {
   // console.log(data);
   const total = data.length;
   // 計算總頁數
-  const perPage = 8; // 每一頁有幾筆
+  const perPage = 4; // 每一頁有幾筆
   const lastPage = Math.ceil(total / perPage);
 
   // 計算要跳過幾筆）
