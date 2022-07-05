@@ -48,17 +48,65 @@ const uploader = multer({
   },
 });
 
+//test
+router.get('/test', async (req, res, next) => {
+  let [data] = await pool.execute(`SELECT bartd_list.id,bartd_list.name,bartd_list.img FROM bartd_list, bartd_material,bartd_cate_list WHERE 
+  bartd_list.id=bartd_material.bartd_id 
+  AND bartd_cate_list.bartd_id=bartd_list.id 
+  AND bartd_material.mater_cate_m = 6
+ 
+  GROUP BY bartd_list.id`);
+  const tempM = [...data];
+
+  let array = [];
+
+  await Promise.all(
+    tempM.map(async (v, i) => {
+      let [a] = await pool.execute(
+        `SELECT GROUP_CONCAT(DISTINCT bartd_material.name) AS material FROM bartd_list, bartd_material,bartd_cate_list WHERE
+        bartd_list.id=bartd_material.bartd_id
+        AND bartd_cate_list.bartd_id=bartd_list.id
+        AND bartd_list.id=?`,
+        [v.id]
+      );
+      array.push(...a);
+    })
+  );
+  console.log(array);
+
+  res.json({ data: data, array: array });
+});
+
+//test2
+router.get('/test2', async (req, res, next) => {
+  let [data] = await pool.execute(`SELECT bartd_list.id,bartd_list.name,bartd_list.img FROM bartd_list, bartd_material,bartd_cate_list WHERE 
+  bartd_list.id=bartd_material.bartd_id 
+  AND bartd_cate_list.bartd_id=bartd_list.id 
+  AND bartd_material.mater_cate_m = 6
+ 
+  GROUP BY bartd_list.id`);
+
+  const array = data.map((value) => value.id);
+
+  const [a] = await pool.execute(
+    `SELECT GROUP_CONCAT(DISTINCT bartd_material.name) AS material FROM bartd_list, bartd_material,bartd_cate_list WHERE
+        bartd_list.id=bartd_material.bartd_id
+        AND bartd_cate_list.bartd_id=bartd_list.id
+        AND bartd_list.id IN (${array.toString()})
+        GROUP BY bartd_list.id`
+  );
+  //IN (${array.toString()}) console.log(array.toString());
+
+  res.json({ data: data, a: a });
+});
+
 //酒譜列表
 router.get('/', async (req, res, next) => {
   // TODO: 抓出有哪些酒譜
   let [data] = await pool.execute('SELECT * FROM `bartd_list`');
   console.log(data);
-  
 
   for (let index = 0; index < data.length; index++) {
-
-
-
     // console.log(data[index]);
     // TODO: 從id去抓各個酒譜有哪些材料(data: for loop)
     let [data2] = await pool.execute('SELECT * FROM bartd_material WHERE bartd_id =?', [data[index].id]);
@@ -82,7 +130,7 @@ router.get('/', async (req, res, next) => {
     // console.log(data3);
     let data3Arr = [];
     data3Arr = data3.map((v, i) => {
-      console.log(v);
+      //console.log(v);
       if (v.mater_cate_l == 1) {
         return v.mater_cate_m;
       }
