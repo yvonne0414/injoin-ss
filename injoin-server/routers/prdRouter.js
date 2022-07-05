@@ -443,6 +443,13 @@ router.get('/detail/:prdId', async (req, res, next) => {
   res.json({ cateL: cateL, detailData: [detailData[0]], detailImgList });
 });
 
+// 熱門商品
+router.get('/hot', async (req, res) => {
+  let [data] = await pool.execute('SELECT id, name, main_img FROM `prd_list` ORDER BY `prd_list`.`sale_quantity` DESC LIMIT 10');
+
+  res.json({ data });
+});
+
 // 類別
 router.get('/cateL', async (req, res) => {
   let [cateL] = await pool.execute('SELECT id, name FROM `prd_detail_cate` WHERE level = 1');

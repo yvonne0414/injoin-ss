@@ -5,6 +5,7 @@ const pool = require('../utils/db');
 // for image upload
 const multer = require('multer');
 const path = require('path');
+const { default: axios } = require('axios');
 
 // 圖片上傳需要地方放，在 public 裡，建立了 uploads 檔案夾
 // 設定圖片儲存的位置
@@ -194,6 +195,13 @@ router.get(`/related`, async (req, res) => {
       material: materNameList,
     });
   }
+
+  res.json({ data });
+});
+
+// 首頁酒譜
+router.get('/hot', async (req, res) => {
+  let [data] = await pool.execute('SELECT id, name, img FROM `bartd_list` LIMIT 10');
 
   res.json({ data });
 });
