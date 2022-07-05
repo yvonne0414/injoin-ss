@@ -6,6 +6,7 @@ const pool = require('../utils/db');
 const multer = require('multer');
 const path = require('path');
 const { default: axios } = require('axios');
+const { log } = require('console');
 
 // 圖片上傳需要地方放，在 public 裡，建立了 uploads 檔案夾
 // 設定圖片儲存的位置
@@ -64,14 +65,103 @@ const multi_upload = multer({
   },
 }).array('prdImg[]', 5);
 
+// 商品列表
 router.get('/prdList', async (req, res, next) => {
   // 當前頁面
   let page = req.query.page || 1;
+  let orderById = req.query.orderById || 1;
+  let orderBy = 'price ASC';
+  let category = Number(req.query.category);
+  let cateM = Number(req.query.cateM) || 0;
+  let cateS = Number(req.query.cateS) || 0;
+  let keyword = req.query.keyword || '';
 
-  let [allData, fields] = await pool.execute('SELECT * FROM `prd_list` WHERE status = 1 AND category= ?', [req.query.category]);
+  switch (Number(orderById)) {
+    case 1:
+      orderBy = 'price ASC';
+      break;
+    case 2:
+      orderBy = 'price DESC';
+      break;
+    case 3:
+      orderBy = 'rate ASC';
+      break;
+    case 4:
+      orderBy = 'rate DESC';
+      break;
+  }
+
+  let allData = [];
+  if (keyword !== '') {
+    let [Data] = await pool.execute('SELECT * FROM `prd_list` WHERE status = 1 AND category= ? AND prd_list.name LIKE ?', [category, `%${keyword}%`]);
+    allData = Data;
+  } else if (category === 1 && cateS !== 0) {
+    // 查小分類
+    switch (category) {
+      case 1:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_s = ?', [
+            cateS,
+          ]);
+          allData = Data;
+        }
+        break;
+      case 2:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_s = ?', [
+            cateS,
+          ]);
+          allData = Data;
+        }
+        break;
+      case 3:
+      case 4:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_s = ?', [
+            cateS,
+          ]);
+          allData = Data;
+        }
+        break;
+    }
+  } else if (cateM !== 0) {
+    // 查中分類
+    switch (category) {
+      case 1:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_m = ?', [
+            cateM,
+          ]);
+          allData = Data;
+        }
+        break;
+      case 2:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_m = ?', [
+            cateM,
+          ]);
+          allData = Data;
+        }
+        break;
+      case 3:
+      case 4:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_m = ?', [
+            cateM,
+          ]);
+          allData = Data;
+        }
+        break;
+    }
+  } else {
+    // 查大分類
+    let [Data] = await pool.execute('SELECT * FROM `prd_list` WHERE status = 1 AND category= ? ', [category]);
+    allData = Data;
+  }
 
   // 總數
   const total = allData.length;
+  console.log(total);
 
   // 計算總頁數
   const perPage = 16; // 每一頁有幾筆
@@ -81,7 +171,88 @@ router.get('/prdList', async (req, res, next) => {
   let offset = (page - 1) * perPage;
 
   // 取得這一頁的資料 select * from table limit ? offet ?
-  let [pageData] = await pool.execute('SELECT * FROM `prd_list` WHERE status = 1 AND category= ?  LIMIT ? OFFSET ?', [req.query.category, perPage, offset]);
+  let pageData = [];
+  console.log(category);
+  console.log(cateM);
+
+  if (keyword !== '') {
+    let [data] = await pool.execute(`SELECT * FROM prd_list WHERE status = 1 AND category= ? AND prd_list.name LIKE ?  ORDER BY ${orderBy} LIMIT ? OFFSET ?`, [
+      category,
+      `%${keyword}%`,
+      perPage,
+      offset,
+    ]);
+    pageData = data;
+  } else if (category === 1 && cateS !== 0) {
+    // 查小分類
+    switch (category) {
+      case 1:
+        {
+          let [Data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateS, perPage, offset]
+          );
+          pageData = Data;
+        }
+        break;
+      case 2:
+        {
+          let [Data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateS, perPage, offset]
+          );
+          pageData = Data;
+        }
+        break;
+      case 3:
+      case 4:
+        {
+          let [Data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateS, perPage, offset]
+          );
+          pageData = Data;
+        }
+        break;
+    }
+  } else if (cateM !== 0) {
+    // 查中分類
+    switch (category) {
+      case 1:
+        {
+          let [Data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateM, perPage, offset]
+          );
+          pageData = Data;
+        }
+        break;
+      case 2:
+        {
+          let [Data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateM, perPage, offset]
+          );
+          pageData = Data;
+        }
+        break;
+      case 3:
+      case 4:
+        {
+          let [Data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateM, perPage, offset]
+          );
+          pageData = Data;
+        }
+        break;
+    }
+  } else {
+    // 查大分類
+    let [data] = await pool.execute(`SELECT * FROM prd_list WHERE status = 1 AND category= ?  ORDER BY ${orderBy} LIMIT ? OFFSET ?`, [category, perPage, offset]);
+    pageData = data;
+  }
+
   res.json({
     pagination: {
       total,
@@ -102,12 +273,12 @@ router.get('/prdCate', async (req, res, next) => {
   let majorPrdSel = [];
   let subPrdSel = [[], [], [], []];
   let thirdPrdSel = [[], [], [], [], [], [], [], []];
-  console.log(majorPrdSelData);
+  // console.log(majorPrdSelData);
   majorPrdSel = majorPrdSelData.map((v, i) => {
-    console.log(v);
+    // console.log(v);
     return v.name;
   });
-  console.log(subPrdSelData);
+  // console.log(subPrdSelData);
   subPrdSelData.map((v) => {
     // console.log(v.name);
     switch (v.parent_id) {
@@ -138,23 +309,57 @@ router.get('/prdCate', async (req, res, next) => {
 
 router.get('/detail/:prdId', async (req, res, next) => {
   // 商品細項用到的名稱
-  let [detailData] = await pool.execute(
-    'SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.main_img, prd_list.disc, prd_type1_detail.cate_m, prd_type1_detail.cate_s, prd_list.rate, prd_type1_detail.brand,prd_type1_detail.capacity, prd_origin.name AS originName FROM prd_list JOIN prd_type1_detail on prd_list.id = prd_type1_detail.prd_id JOIN prd_origin ON prd_type1_detail.origin = prd_origin.id WHERE prd_list.id = ?',
-    [req.params.prdId]
-  );
+  let prdId = req.params.prdId;
+  let [cateL] = await pool.execute(`SELECT category FROM prd_list WHERE prd_list.id = ?`, [req.params.prdId]);
+  // console.log('cateL:', cateL[0].category);
+  cateL = cateL[0].category;
+  let detailData = [];
+  switch (cateL) {
+    case 1:
+      let [type1List] = await pool.execute(
+        'SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.main_img, prd_list.disc, prd_type1_detail.cate_m, prd_type1_detail.cate_s, prd_list.rate, prd_type1_detail.abv, prd_type1_detail.brand,prd_type1_detail.capacity, prd_origin.name AS originName FROM prd_list JOIN prd_type1_detail on prd_list.id = prd_type1_detail.prd_id JOIN prd_origin ON prd_type1_detail.origin = prd_origin.id WHERE prd_list.id = ?',
+        [prdId]
+      );
+      detailData.push(type1List[0]);
+      break;
+    case 2:
+      {
+        let [type2List] = await pool.execute(
+          'SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.main_img, prd_list.disc, prd_type2_detail.cate_m, prd_list.rate, prd_type2_detail.brand,prd_type2_detail.capacity, prd_origin.name AS originName FROM prd_list JOIN prd_type2_detail on prd_list.id = prd_type2_detail.prd_id JOIN prd_origin ON prd_type2_detail.origin = prd_origin.id WHERE prd_list.id = ?',
+          [prdId]
+        );
+        detailData.push(type2List[0]);
+      }
+      break;
+    case 3:
+    case 4:
+      {
+        let [type3List] = await pool.execute(
+          'SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.main_img, prd_list.disc, prd_type3_detail.cate_m, prd_list.rate, prd_type3_detail.capacity, prd_material_cate.name AS materName, prd_origin.name AS originName FROM prd_list JOIN prd_type3_detail on prd_list.id = prd_type3_detail.prd_id JOIN prd_origin ON prd_type3_detail.origin = prd_origin.id JOIN prd_material_cate ON prd_material_cate.id =prd_type3_detail.mater WHERE prd_list.id = ?',
+          [prdId]
+        );
+        detailData.push(type3List[0]);
+      }
+      break;
+  }
+
   // console.log(detailData);
 
-  console.log(detailData[0].cate_m);
-  console.log(detailData[0].cate_s);
+  // console.log(detailData);
+  // console.log(detailData[0].cate_m);
+  // console.log(detailData[0].cate_s);
 
   // 中分類的 prd_detail_cate 的 Name (cate_m)
   let [cateMNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_m]);
   let cateMName = cateMNameData[0].name;
-  // 小分類的 prd_detail_cate 的 Name (cate_s)
-  let [cateSNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_s]);
-  let cateSName = cateSNameData[0].name;
+  detailData[0] = { ...detailData[0], cateMName };
 
-  detailData[0] = { ...detailData[0], cateMName, cateSName };
+  if (cateL === 1) {
+    // 小分類的 prd_detail_cate 的 Name (cate_s)
+    let [cateSNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_s]);
+    let cateSName = cateSNameData[0].name;
+    detailData[0] = { ...detailData[0], cateMName, cateSName };
+  }
 
   let [detailImgData] = await pool.execute('SELECT url  FROM `prd_img` WHERE prd_id = ?', [req.params.prdId]);
   // console.log(detailImgData);
@@ -166,7 +371,7 @@ router.get('/detail/:prdId', async (req, res, next) => {
     detailImgList.push(detailImgData[i].url);
   }
 
-  res.json({ detailData: [detailData[0]], detailImgList });
+  res.json({ cateL: cateL, detailData: [detailData[0]], detailImgList });
 });
 
 // 類別
@@ -197,10 +402,10 @@ router.get(`/related/:prdId`, async (req, res) => {
   // console.log(prdId);
   try {
     let data = [];
-    console.log(cateM);
-    console.log(cateM.length);
+    // console.log(cateM);
+    // console.log(cateM.length);
     for (let i = 0; i < cateM.length; i++) {
-      console.log(cateM[i]);
+      // console.log(cateM[i]);
       let [type1res] = await pool.execute(
         `SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.rate, prd_list.main_img FROM prd_list JOIN prd_type1_detail ON  prd_list.id = prd_type1_detail.prd_id  WHERE cate_m = ? AND prd_list.status = 1`,
         [Number(cateM[i])]
@@ -233,7 +438,7 @@ router.get(`/related/:prdId`, async (req, res) => {
 // 新增商品
 router.post('/', async (req, res) => {
   multi_upload(req, res, async function (err) {
-    console.log(req.body);
+    // console.log(req.body);
     if (err instanceof multer.MulterError) {
       // A Multer error occurred when uploading.
       res
