@@ -472,9 +472,10 @@ router.get('/material', async (req, res) => {
 
 // 相關商品
 router.get(`/related/:prdId`, async (req, res) => {
-  let cateM = [5, 11, 16];
+  let cateM = req.query.cateM;
   // let cateM = req.query.cateM;
   let prdId = req.params.prdId;
+  let userId = req.query.userId || -1;
   // console.log(prdId);
   try {
     let data = [];
@@ -505,6 +506,16 @@ router.get(`/related/:prdId`, async (req, res) => {
         Number(prdId) !== item.id && data.push(item);
       });
     }
+
+    for (let i = 0; i < data.length; i++) {
+      let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+      let isPrdLike = false;
+      if (likeData.length > 0) {
+        isPrdLike = true;
+      }
+      data[i] = { ...data[i], isPrdLike };
+    }
+
     res.json({ data: data });
   } catch (e) {
     console.error(e);

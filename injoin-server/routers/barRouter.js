@@ -135,7 +135,7 @@ router.get('/search', async (req, res, next) => {
 //   let [data] = await pool.execute('SELECT * FROM `bartd_list` WHERE id = ' + req.params.bartd_listID);
 //   res.json(data);
 // });
-
+// 詳細頁
 router.get('/detail/:barId', async (req, res, next) => {
   // console.log(req.params.barId);
   //bartd_list
@@ -172,6 +172,8 @@ router.get('/cateM', async (req, res) => {
 
 // 相關酒譜
 router.get(`/related`, async (req, res) => {
+  let userId = req.query.userId || -1;
+
   let [barIdList] = await pool.execute(`SELECT bartd_id FROM bartd_material WHERE mater_cate_m = ?`, [req.query.cateM]);
   let newbarIdList = [];
   barIdList.map((item) => {
@@ -190,9 +192,17 @@ router.get(`/related`, async (req, res) => {
     materList.map((item) => {
       materNameList.push(item.name);
     });
+
+    let [likeData] = await pool.execute(`SELECT * FROM user_bartd_like WHERE user_id = ? AND bartd_id =?`, [userId, newbarIdList[i]]);
+    let isBarLike = false;
+    if (likeData.length > 0) {
+      isBarLike = true;
+    }
+
     data.push({
       ...barList[0],
       material: materNameList,
+      isLike: isBarLike,
     });
   }
 
