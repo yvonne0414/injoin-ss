@@ -2,21 +2,20 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../utils/db');
 
-
 // 加入調酒最
 // /api/userlike/bartd/add?bartdid=1
-router.get("/bartd/:userid/add", async(req,res,next)=>{
+router.get('/bartd/:userid/add', async (req, res, next) => {
   // console.log(req.params.userid,req.query.bartdid);
-  let [data] = await pool.execute('INSERT INTO `user_bartd_like`(`user_id`, `bartd_id`) VALUES (?,?)',[req.params.userid,req.query.bartdid])
-  res.json({code:0, message:"加入成功"})
-})
+  let [data] = await pool.execute('INSERT INTO `user_bartd_like`(`user_id`, `bartd_id`) VALUES (?,?)', [req.params.userid, req.query.bartdid]);
+  res.json({ code: 0, message: '加入成功' });
+});
 
 // 刪除調酒最
 // /api/userlike/bartd/del?bartdid=1
-router.get ("/bartd/:userid/del",async(req,res,next)=>{
-  let [data] = await pool.execute("DELETE FROM user_bartd_like WHERE user_bartd_like.user_id=? AND user_bartd_like.bartd_id = ?",[req.params.userid,req.query.bartdid])
+router.get('/bartd/:userid/del', async (req, res, next) => {
+  let [data] = await pool.execute('DELETE FROM user_bartd_like WHERE user_bartd_like.user_id=? AND user_bartd_like.bartd_id = ?', [req.params.userid, req.query.bartdid]);
   res.json({ code: 0, message: '刪除成功' });
-})
+});
 
 // 調酒最愛
 // /api/userlike/bartd
@@ -47,13 +46,13 @@ router.get('/bartd/:user_id', async (req, res, next) => {
     let bartd_id = data3[index].id;
     [data2] = await pool.execute('SELECT * FROM `bartd_material` WHERE bartd_material.bartd_id=?', [bartd_id]);
 
-    let string = '';
+    let arr = [];
     for (let j = 0; j < data2.length; j++) {
-      string = `${string} ${data2[j].name}`;
+      // string = `${string} ${data2[j].name}`;
+      arr.push(data2[j].name);
     }
 
-    data3[index] = { ...data3[index], material: string };
-
+    data3[index] = { ...data3[index], material: arr };
   }
 
   res.json({

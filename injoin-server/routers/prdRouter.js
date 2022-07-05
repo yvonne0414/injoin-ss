@@ -75,6 +75,7 @@ router.get('/prdList', async (req, res, next) => {
   let cateM = Number(req.query.cateM) || 0;
   let cateS = Number(req.query.cateS) || 0;
   let keyword = req.query.keyword || '';
+  let userId = req.query.userId || -1;
 
   switch (Number(orderById)) {
     case 1:
@@ -182,36 +183,72 @@ router.get('/prdList', async (req, res, next) => {
       perPage,
       offset,
     ]);
+
+    for (let i = 0; i < data.length; i++) {
+      let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+      let isPrdLike = false;
+      if (likeData.length > 0) {
+        isPrdLike = true;
+      }
+      data[i] = { ...data[i], isPrdLike };
+    }
+
     pageData = data;
   } else if (category === 1 && cateS !== 0) {
     // 查小分類
     switch (category) {
       case 1:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateS, perPage, offset]
           );
-          pageData = Data;
+
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i] = { ...data[i], isPrdLike };
+          }
+
+          pageData = data;
         }
         break;
       case 2:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateS, perPage, offset]
           );
-          pageData = Data;
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
         }
         break;
       case 3:
       case 4:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateS, perPage, offset]
           );
-          pageData = Data;
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
         }
         break;
     }
@@ -220,36 +257,68 @@ router.get('/prdList', async (req, res, next) => {
     switch (category) {
       case 1:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateM, perPage, offset]
           );
-          pageData = Data;
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
         }
         break;
       case 2:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateM, perPage, offset]
           );
-          pageData = Data;
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
         }
         break;
       case 3:
       case 4:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateM, perPage, offset]
           );
-          pageData = Data;
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
         }
         break;
     }
   } else {
     // 查大分類
     let [data] = await pool.execute(`SELECT * FROM prd_list WHERE status = 1 AND category= ?  ORDER BY ${orderBy} LIMIT ? OFFSET ?`, [category, perPage, offset]);
+    for (let i = 0; i < data.length; i++) {
+      let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+      let isPrdLike = false;
+      if (likeData.length > 0) {
+        isPrdLike = true;
+      }
+      data[i] = { ...data[i], isPrdLike };
+    }
     pageData = data;
   }
 
