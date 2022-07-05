@@ -190,6 +190,7 @@ router.get('/prdList', async (req, res, next) => {
       if (likeData.length > 0) {
         isPrdLike = true;
       }
+      data[i].rate = data[i].rate.toFixed(1);
       data[i] = { ...data[i], isPrdLike };
     }
 
@@ -210,6 +211,7 @@ router.get('/prdList', async (req, res, next) => {
             if (likeData.length > 0) {
               isPrdLike = true;
             }
+            data[i].rate = data[i].rate.toFixed(1);
             data[i] = { ...data[i], isPrdLike };
           }
 
@@ -228,6 +230,7 @@ router.get('/prdList', async (req, res, next) => {
             if (likeData.length > 0) {
               isPrdLike = true;
             }
+            data[i].rate = data[i].rate.toFixed(1);
             data[i] = { ...data[i], isPrdLike };
           }
           pageData = data;
@@ -246,6 +249,7 @@ router.get('/prdList', async (req, res, next) => {
             if (likeData.length > 0) {
               isPrdLike = true;
             }
+            data[i].rate = data[i].rate.toFixed(1);
             data[i] = { ...data[i], isPrdLike };
           }
           pageData = data;
@@ -267,6 +271,7 @@ router.get('/prdList', async (req, res, next) => {
             if (likeData.length > 0) {
               isPrdLike = true;
             }
+            data[i].rate = data[i].rate.toFixed(1);
             data[i] = { ...data[i], isPrdLike };
           }
           pageData = data;
@@ -284,6 +289,7 @@ router.get('/prdList', async (req, res, next) => {
             if (likeData.length > 0) {
               isPrdLike = true;
             }
+            data[i].rate = data[i].rate.toFixed(1);
             data[i] = { ...data[i], isPrdLike };
           }
           pageData = data;
@@ -302,6 +308,7 @@ router.get('/prdList', async (req, res, next) => {
             if (likeData.length > 0) {
               isPrdLike = true;
             }
+            data[i].rate = data[i].rate.toFixed(1);
             data[i] = { ...data[i], isPrdLike };
           }
           pageData = data;
@@ -317,6 +324,7 @@ router.get('/prdList', async (req, res, next) => {
       if (likeData.length > 0) {
         isPrdLike = true;
       }
+      data[i].rate = data[i].rate.toFixed(1);
       data[i] = { ...data[i], isPrdLike };
     }
     pageData = data;
@@ -434,6 +442,7 @@ router.get('/detail/:prdId', async (req, res, next) => {
   // console.log(detailImgData);
 
   // detailImgData.unshift(url: detailData[0].main_img);
+  detailData[0].rate = detailData[0].rate.toFixed(1);
 
   let detailImgList = [detailData[0].main_img];
   for (i = 0; i < detailImgData.length; i++) {
