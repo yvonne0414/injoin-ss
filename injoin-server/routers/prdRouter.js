@@ -164,7 +164,7 @@ router.get('/prdList', async (req, res, next) => {
   console.log(total);
 
   // 計算總頁數
-  const perPage = 16; // 每一頁有幾筆
+  const perPage = 12; // 每一頁有幾筆
   const lastPage = Math.ceil(total / perPage);
 
   // 計算要跳過幾筆
