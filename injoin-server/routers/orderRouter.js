@@ -43,14 +43,18 @@ router.use('/detail/:orderId', async (req, res, next) => {
 router.get('/', async (req, res, next) => {
   // 當前頁面
   // console.log(req.query);
+  // page 為後端命名變數
+  // req.query.page 為給前端的命名
   let page = req.query.page || 1;
-  let userId = req.query.userId || 1;
+  let userId = req.query.userId || 3;
   let logisticsState = req.query.logisticsState || 1;
+  let orderdatestart = req.query.orderdatestart || '2022-01-01';
+  let orderdateend = req.query.orderdateend || '2022-12-31';
 
   // 抓資料
   let [allData, fields] = await pool.execute(
-    `SELECT order_list.*, user_list.name as userName, user_list.phone as userPhone, user_list.email as userEmail, user_list.address_detail as userAddress, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_list.user_id = ? AND order_list.logistics_state = ? `,
-    [userId, logisticsState]
+    `SELECT order_list.*, user_list.name as userName, user_list.phone as userPhone, user_list.email as userEmail, user_list.address_detail as userAddress, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_list.user_id = ? AND order_list.logistics_state = ? AND order_list.order_time BETWEEN ? AND ?`,
+    [userId, logisticsState, orderdatestart, orderdateend]
   );
   // 總數
   const total = allData.length;
@@ -65,8 +69,8 @@ router.get('/', async (req, res, next) => {
 
   // 取得這一頁的資料 select * from table limit ? offet ?
   let [pageData] = await pool.execute(
-    'SELECT order_list.*, user_list.name as userName, user_list.phone as userPhone, user_list.email as userEmail, user_list.address_detail as userAddress, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_list.user_id = ? AND order_list.logistics_state = ? ORDER BY order_list.order_time DESC LIMIT ? OFFSET ?',
-    [userId, logisticsState, perPage, offset]
+    'SELECT order_list.*, user_list.name as userName, user_list.phone as userPhone, user_list.email as userEmail, user_list.address_detail as userAddress, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id WHERE order_list.user_id = ? AND order_list.logistics_state = ? AND order_list.order_time BETWEEN ? AND ? ORDER BY order_list.order_time DESC LIMIT ? OFFSET ?',
+    [userId, logisticsState, orderdatestart, orderdateend, perPage, offset]
   );
 
   // console.log(pageData);
