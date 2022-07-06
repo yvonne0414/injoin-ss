@@ -395,6 +395,29 @@ router.get('/', async (req, res, next) => {
   });
 });
 
+router.get('/be/list', async (req, res) => {
+  let [data] = await pool.execute(`SELECT * FROM bartd_list ORDER BY id DESC`);
+  let page = req.query.page || 1;
+  const total = data.length;
+  // 計算總頁數
+  const perPage = 8; // 每一頁有幾筆
+  const lastPage = Math.ceil(total / perPage);
+
+  // 計算要跳過幾筆）
+  let offset = (page - 1) * perPage;
+
+  let [prdListPageData] = await pool.execute('SELECT * FROM bartd_list ORDER BY id DESC LIMIT ? OFFSET ?', [perPage, offset]);
+
+  res.json({
+    pagination: {
+      total,
+      lastPage,
+      page,
+    },
+    data: prdListPageData,
+  });
+});
+
 // 新增酒譜
 router.post('/', uploader.single('bartdImg'), async (req, res) => {
   let name = req.body.name;
