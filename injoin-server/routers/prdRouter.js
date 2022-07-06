@@ -415,8 +415,10 @@ router.get('/prdCate', async (req, res, next) => {
   res.json({ majorPrdSel, subPrdSel });
 });
 
+// 商品細節
 router.get('/detail/:prdId', async (req, res, next) => {
   // 商品細項用到的名稱
+  let userId = req.query.userId || -1;
   let prdId = req.params.prdId;
   let [cateL] = await pool.execute(`SELECT category FROM prd_list WHERE prd_list.id = ?`, [req.params.prdId]);
   // console.log('cateL:', cateL[0].category);
@@ -460,7 +462,14 @@ router.get('/detail/:prdId', async (req, res, next) => {
   // 中分類的 prd_detail_cate 的 Name (cate_m)
   let [cateMNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_m]);
   let cateMName = cateMNameData[0].name;
-  detailData[0] = { ...detailData[0], cateMName };
+
+  // 是否加入最愛
+  let [isLikeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id= ? AND prd_id = ?`, [userId, prdId]);
+  let isLike = false;
+  if (isLikeData.length > 0) {
+    isLike = true;
+  }
+  detailData[0] = { ...detailData[0], cateMName, isLike };
 
   if (cateL === 1) {
     // 小分類的 prd_detail_cate 的 Name (cate_s)

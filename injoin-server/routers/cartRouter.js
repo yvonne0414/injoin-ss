@@ -3,13 +3,16 @@ const router = express.Router();
 const pool = require('../utils/db');
 
 // /api/cart/getUserCoupon?userId=1
-router.get('/getUserCoupon', async(req,res,next)=>{
+router.get('/getUserCoupon', async (req, res, next) => {
   // console.log(req.query.userId);
   userId = req.query.userId || 1;
   // console.log(userId);
-  let [data] = await pool.execute(`SELECT user_coupon.*,coupon_list.name,coupon_list.discount ,coupon_list.rule_min FROM user_coupon JOIN coupon_list ON user_coupon.coupon_id = coupon_list.id WHERE user_id = ? AND coupon_list.coupon_cate = 1`,[userId])
-  res.json(data)
-})
+  let [data] = await pool.execute(
+    `SELECT user_coupon.*,coupon_list.name,coupon_list.discount ,coupon_list.rule_min FROM user_coupon JOIN coupon_list ON user_coupon.coupon_id = coupon_list.id WHERE user_id = ? AND coupon_list.coupon_cate = 1`,
+    [userId]
+  );
+  res.json(data);
+});
 
 // /api/cart/getPrdDetail?prdId=2
 router.get('/getPrdDetail', async (req, res, next) => {
@@ -101,7 +104,7 @@ router.post('/', async (req, res) => {
   // console.log(orderId);
 
   // response
-  res.json({ code: 200, result: 'ok' });
+  res.json({ code: 200, result: 'ok', orderId: orderId });
 });
 
 module.exports = router;

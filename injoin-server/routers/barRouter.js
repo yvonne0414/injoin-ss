@@ -145,13 +145,26 @@ router.get('/detail/:barId', async (req, res, next) => {
   //bartd_material(材料)
   let [data2] = await pool.execute('SELECT * FROM bartd_material WHERE bartd_id =?', [req.params.barId]);
 
+  // 所屬類型
+  let [cateSNameData] = await pool.execute(
+    `SELECT bartd_cate_type.name FROM bartd_cate_list JOIN bartd_cate_type ON bartd_cate_list.bartd_cate_id_s = bartd_cate_type.id WHERE bartd_cate_list.bartd_id = ?`,
+    [req.params.barId]
+  );
+
+  // 有的中分類
   let cateMList = [];
   data2.map((item) => {
     cateMList.push(item.mater_cate_m);
   });
   cateMList = [...new Set(cateMList)];
 
-  let newdata = { ...data, material: data2, cateMList };
+  // 所屬小分類
+  let cateSNameList = [];
+  cateSNameData.map((item) => {
+    cateSNameList.push(item.name);
+  });
+
+  let newdata = { ...data, material: data2, cateMList, cateSNameList };
 
   if (data.legth === 0) {
     res.status(404).json(data);
