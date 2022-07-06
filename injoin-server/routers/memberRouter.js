@@ -8,7 +8,7 @@ router.get('/info', (req, res, next) => {
     return res.json(req.session.member);
   } else {
     // 表示尚未登入
-    return res.status(403).json({ code: 2001, error: '尚未登入' });
+    return res.json({ code: 2001, error: '尚未登入' });
   }
 });
 
