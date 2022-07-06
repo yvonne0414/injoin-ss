@@ -187,11 +187,22 @@ router.post('/changepwd', async (req, res, next) => {
   res.json({ code: 0, error: 'SUCCESS' });
 });
 
+
+
 // /api/auth/about
 router.get('/about/:userid', async (req, res, next) => {
   let [datas] = await pool.execute('SELECT user_list.name, user_list.email, user_list.user_img FROM `user_list` WHERE id = ? ', [req.params.userid]);
   res.json({ datas });
 });
+
+// 個人資訊
+// http://localhost:3001/api/auth/about?userid=1
+router.get("/about",async(req,res,next)=>{
+  console.log(req.query.userid);
+  let [data]= await pool.execute("SELECT * FROM user_list WHERE id = ?", [req.query.userid])
+  res.json(data)
+})
+
 
 router.get('/logout', (req, res, next) => {
   // 因為我們會依靠判斷 req.session.member 有沒有資料來當作有沒有登入

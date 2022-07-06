@@ -5,6 +5,7 @@ const pool = require('../utils/db');
 // for image upload
 const multer = require('multer');
 const path = require('path');
+const { default: axios } = require('axios');
 
 // 圖片上傳需要地方放，在 public 裡，建立了 uploads 檔案夾
 // 設定圖片儲存的位置
@@ -231,7 +232,7 @@ router.get('/search', async (req, res, next) => {
 //   let [data] = await pool.execute('SELECT * FROM `bartd_list` WHERE id = ' + req.params.bartd_listID);
 //   res.json(data);
 // });
-
+// 詳細頁
 router.get('/detail/:barId', async (req, res, next) => {
   // console.log(req.params.barId);
   //bartd_list
@@ -268,6 +269,8 @@ router.get('/cateM', async (req, res) => {
 
 // 相關酒譜
 router.get(`/related`, async (req, res) => {
+  let userId = req.query.userId || -1;
+
   let [barIdList] = await pool.execute(`SELECT bartd_id FROM bartd_material WHERE mater_cate_m = ?`, [req.query.cateM]);
   let newbarIdList = [];
   barIdList.map((item) => {
@@ -286,13 +289,207 @@ router.get(`/related`, async (req, res) => {
     materList.map((item) => {
       materNameList.push(item.name);
     });
+
+    let [likeData] = await pool.execute(`SELECT * FROM user_bartd_like WHERE user_id = ? AND bartd_id =?`, [userId, newbarIdList[i]]);
+    let isBarLike = false;
+    if (likeData.length > 0) {
+      isBarLike = true;
+    }
+
     data.push({
       ...barList[0],
       material: materNameList,
+      isLike: isBarLike,
     });
   }
 
   res.json({ data });
+});
+
+// 首頁酒譜
+router.get('/hot', async (req, res) => {
+  let [data] = await pool.execute('SELECT id, name, img FROM `bartd_list` LIMIT 10');
+
+  res.json({ data });
+});
+
+// 酒譜列表
+// 舊的
+router.get('/old', async (req, res, next) => {
+  // TODO: 抓出有哪些酒譜
+  let [data] = await pool.execute('SELECT * FROM `bartd_list`');
+  console.log(data);
+
+  for (let index = 0; index < data.length; index++) {
+    // console.log(data[index]);
+    // TODO: 從id去抓各個酒譜有哪些材料(data: for loop)
+    let [data2] = await pool.execute('SELECT * FROM bartd_material WHERE bartd_id =?', [data[index].id]);
+    // console.log(data2);
+    //把[1,2,3] ==> '1 2 3' 把材料處理成需要的格式
+    // let data2Arr = '';
+    let data2Arr = [];
+    for (let index = 0; index < data2.length; index++) {
+      // console.log(data2[index].name);
+      // data2Arr = `${data2Arr} ${data2[index].name}`;
+      data2Arr.push(data2[index].name);
+    }
+    // TODO: 把材料存入各id的{}
+    // console.log(data2Arr);
+    // console.log(data[index]);
+    //ex: let obj = {a:0, b:1}  obj.a = 0 obj.b = 1
+    //加第三個(c) obj.c=3
+    //結果 obj {a:0, b:1, c:3}
+    data[index].material = data2Arr;
+
+    //基酒nav
+    let [data3] = await pool.execute('SELECT * FROM bartd_material WHERE  bartd_id =?', [data[index].id]);
+    // console.log(data3);
+    let data3Arr = [];
+    data3Arr = data3.map((v, i) => {
+      console.log(v);
+      if (v.mater_cate_l == 1) {
+        return v.mater_cate_m;
+      }
+    });
+    data[index].mater_cate_m = data3Arr;
+  }
+
+  // 想要的結果
+  // allData=[{id:1, name:米奇拉達 , material:[蕃茄汁, 現榨檸檬汁, 梅林辣醬油, 可樂娜啤酒, Tajin墨西哥調味粉]},{id:2, name:米奇拉達 , material:[蕃茄汁, 現榨檸檬汁, 梅林辣醬油, 可樂娜啤酒, Tajin墨西哥調味粉]}]
+  res.json(data);
+});
+router.get('/', async (req, res, next) => {
+  // 當前頁面
+  let page = req.query.page || 1;
+  let category = req.query.category;
+  let cateS = Number(req.query.cateS) || 0;
+  let keyword = req.query.keyword || '';
+  let userId = req.query.userId || -1;
+
+  // 抓出有哪些酒譜
+  let barIdList = [];
+  let [barIdListData] = await pool.execute('SELECT bartd_id FROM `bartd_material` WHERE mater_cate_m = ?', [category]);
+  barIdListData.map((item) => {
+    barIdList.push(item.bartd_id);
+  });
+  barIdList = [...new Set(barIdList)];
+  // console.log(barIdList);
+  barIdListStr = barIdList.join(',');
+  // console.log(barIdListStr);
+
+  let allData = [];
+  // 有查詢
+  if (keyword !== '') {
+    let [data] = await pool.execute(`SELECT * FROM bartd_list WHERE bartd_list.id IN (?) AND bartd_list.name LIKE ?`, [barIdListStr, `%${keyword}%`]);
+    allData = data;
+  } else if (cateS !== 0) {
+    //有小分類
+    let [data] = await pool.execute(
+      `SELECT bartd_list.*, bartd_cate_list.bartd_cate_id_m, bartd_cate_list.bartd_cate_id_s FROM bartd_list JOIN bartd_cate_list ON bartd_list.id = bartd_cate_list.bartd_id WHERE bartd_list.id IN (?)  AND bartd_cate_list.bartd_cate_id_s = ?`,
+      [barIdListStr, cateS]
+    );
+    allData = data;
+  } else {
+    let [data] = await pool.execute(`SELECT bartd_list.* FROM bartd_list WHERE bartd_list.id IN (?)`, [`${barIdListStr}`]);
+    allData = data;
+  }
+
+  // 總數
+  const total = allData.length;
+  // console.log(total);
+
+  // 計算總頁數
+  const perPage = 12; // 每一頁有幾筆
+  const lastPage = Math.ceil(total / perPage);
+
+  // 計算要跳過幾筆
+  let offset = (page - 1) * perPage;
+
+  // 取得這一頁的資料 select * from table limit ? offet ?
+  let pageData = [];
+
+  if (keyword !== '') {
+    let [data] = await pool.execute(`SELECT * FROM bartd_list WHERE bartd_list.id IN (?) AND bartd_list.name LIKE ? LIMIT ? OFFSET ?`, [
+      barIdListStr,
+      `%${keyword}%`,
+      perPage,
+      offset,
+    ]);
+
+    let newData = [];
+    for (let i = 0; i < data.length; i++) {
+      let material = [];
+      let [materialListData] = await pool.execute(`SELECT * FROM bartd_material WHERE bartd_id = ?`, [data[i].id]);
+      materialListData.map((mater) => {
+        material.push(mater.name);
+      });
+
+      let isBarLike = false;
+      let [likeData] = await pool.execute(`SELECT * FROM user_bartd_like WHERE bartd_id = ? AND user_id = ?`, [data[i].id, userId]);
+      if (likeData.length > 0) {
+        isBarLike = true;
+      }
+
+      newData.push({ ...data[i], material, isLike: isBarLike });
+    }
+
+    pageData = newData;
+  } else if (cateS !== 0) {
+    //有小分類
+    let [data] = await pool.execute(
+      `SELECT bartd_list.*, bartd_cate_list.bartd_cate_id_m, bartd_cate_list.bartd_cate_id_s FROM bartd_list JOIN bartd_cate_list ON bartd_list.id = bartd_cate_list.bartd_id WHERE bartd_list.id IN (?)  AND bartd_cate_list.bartd_cate_id_s = ? LIMIT ? OFFSET ?`,
+      [barIdListStr, cateS, perPage, offset]
+    );
+
+    let newData = [];
+    for (let i = 0; i < data.length; i++) {
+      let material = [];
+      let [materialListData] = await pool.execute(`SELECT * FROM bartd_material WHERE bartd_id = ?`, [data[i].id]);
+      materialListData.map((mater) => {
+        material.push(mater.name);
+      });
+
+      let isBarLike = false;
+      let [likeData] = await pool.execute(`SELECT * FROM user_bartd_like WHERE bartd_id = ? AND user_id = ?`, [data[i].id, userId]);
+      if (likeData.length > 0) {
+        isBarLike = true;
+      }
+
+      newData.push({ ...data[i], material, isLike: isBarLike });
+    }
+
+    pageData = newData;
+  } else {
+    let [data] = await pool.execute(`SELECT bartd_list.* FROM bartd_list WHERE bartd_list.id IN (?) LIMIT ? OFFSET ?`, [barIdListStr, perPage, offset]);
+
+    let newData = [];
+    for (let i = 0; i < data.length; i++) {
+      let material = [];
+      let [materialListData] = await pool.execute(`SELECT * FROM bartd_material WHERE bartd_id = ?`, [data[i].id]);
+      materialListData.map((mater) => {
+        material.push(mater.name);
+      });
+
+      let isBarLike = false;
+      let [likeData] = await pool.execute(`SELECT * FROM user_bartd_like WHERE bartd_id = ? AND user_id = ?`, [data[i].id, userId]);
+      if (likeData.length > 0) {
+        isBarLike = true;
+      }
+
+      newData.push({ ...data[i], material, isLike: isBarLike });
+    }
+
+    pageData = newData;
+  }
+
+  res.json({
+    pagination: {
+      total,
+      lastPage,
+      page,
+    },
+    data: pageData,
+  });
 });
 
 // 新增酒譜
