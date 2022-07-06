@@ -75,6 +75,7 @@ router.get('/prdList', async (req, res, next) => {
   let cateM = Number(req.query.cateM) || 0;
   let cateS = Number(req.query.cateS) || 0;
   let keyword = req.query.keyword || '';
+  let userId = req.query.userId || -1;
 
   switch (Number(orderById)) {
     case 1:
@@ -164,7 +165,7 @@ router.get('/prdList', async (req, res, next) => {
   console.log(total);
 
   // 計算總頁數
-  const perPage = 16; // 每一頁有幾筆
+  const perPage = 12; // 每一頁有幾筆
   const lastPage = Math.ceil(total / perPage);
 
   // 計算要跳過幾筆
@@ -182,36 +183,76 @@ router.get('/prdList', async (req, res, next) => {
       perPage,
       offset,
     ]);
+
+    for (let i = 0; i < data.length; i++) {
+      let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+      let isPrdLike = false;
+      if (likeData.length > 0) {
+        isPrdLike = true;
+      }
+      data[i].rate = data[i].rate.toFixed(1);
+      data[i] = { ...data[i], isPrdLike };
+    }
+
     pageData = data;
   } else if (category === 1 && cateS !== 0) {
     // 查小分類
     switch (category) {
       case 1:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateS, perPage, offset]
           );
-          pageData = Data;
+
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+
+          pageData = data;
         }
         break;
       case 2:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateS, perPage, offset]
           );
-          pageData = Data;
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
         }
         break;
       case 3:
       case 4:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateS, perPage, offset]
           );
-          pageData = Data;
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
         }
         break;
     }
@@ -220,36 +261,72 @@ router.get('/prdList', async (req, res, next) => {
     switch (category) {
       case 1:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateM, perPage, offset]
           );
-          pageData = Data;
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
         }
         break;
       case 2:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateM, perPage, offset]
           );
-          pageData = Data;
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
         }
         break;
       case 3:
       case 4:
         {
-          let [Data] = await pool.execute(
+          let [data] = await pool.execute(
             `SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
             [cateM, perPage, offset]
           );
-          pageData = Data;
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
         }
         break;
     }
   } else {
     // 查大分類
     let [data] = await pool.execute(`SELECT * FROM prd_list WHERE status = 1 AND category= ?  ORDER BY ${orderBy} LIMIT ? OFFSET ?`, [category, perPage, offset]);
+    for (let i = 0; i < data.length; i++) {
+      let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+      let isPrdLike = false;
+      if (likeData.length > 0) {
+        isPrdLike = true;
+      }
+      data[i].rate = data[i].rate.toFixed(1);
+      data[i] = { ...data[i], isPrdLike };
+    }
     pageData = data;
   }
 
@@ -365,6 +442,7 @@ router.get('/detail/:prdId', async (req, res, next) => {
   // console.log(detailImgData);
 
   // detailImgData.unshift(url: detailData[0].main_img);
+  detailData[0].rate = detailData[0].rate.toFixed(1);
 
   let detailImgList = [detailData[0].main_img];
   for (i = 0; i < detailImgData.length; i++) {
@@ -372,6 +450,13 @@ router.get('/detail/:prdId', async (req, res, next) => {
   }
 
   res.json({ cateL: cateL, detailData: [detailData[0]], detailImgList });
+});
+
+// 熱門商品
+router.get('/hot', async (req, res) => {
+  let [data] = await pool.execute('SELECT id, name, main_img FROM `prd_list` ORDER BY `prd_list`.`sale_quantity` DESC LIMIT 10');
+
+  res.json({ data });
 });
 
 // 類別
@@ -396,9 +481,10 @@ router.get('/material', async (req, res) => {
 
 // 相關商品
 router.get(`/related/:prdId`, async (req, res) => {
-  let cateM = [5, 11, 16];
+  let cateM = req.query.cateM;
   // let cateM = req.query.cateM;
   let prdId = req.params.prdId;
+  let userId = req.query.userId || -1;
   // console.log(prdId);
   try {
     let data = [];
@@ -429,6 +515,16 @@ router.get(`/related/:prdId`, async (req, res) => {
         Number(prdId) !== item.id && data.push(item);
       });
     }
+
+    for (let i = 0; i < data.length; i++) {
+      let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+      let isPrdLike = false;
+      if (likeData.length > 0) {
+        isPrdLike = true;
+      }
+      data[i] = { ...data[i], isPrdLike };
+    }
+
     res.json({ data: data });
   } catch (e) {
     console.error(e);

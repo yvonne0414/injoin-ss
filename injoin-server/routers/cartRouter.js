@@ -2,16 +2,25 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../utils/db');
 
+// /api/cart/getUserCoupon?userId=1
+router.get('/getUserCoupon', async(req,res,next)=>{
+  // console.log(req.query.userId);
+  userId = req.query.userId || 1;
+  // console.log(userId);
+  let [data] = await pool.execute(`SELECT user_coupon.*,coupon_list.name,coupon_list.discount ,coupon_list.rule_min FROM user_coupon JOIN coupon_list ON user_coupon.coupon_id = coupon_list.id WHERE user_id = ? AND coupon_list.coupon_cate = 1`,[userId])
+  res.json(data)
+})
+
 // /api/cart/getPrdDetail?prdId=2
 router.get('/getPrdDetail', async (req, res, next) => {
   // 防呆
   prdId = req.query.prdId || 1;
-  console.log(prdId);
+  // console.log(prdId);
   let [data] = await pool.execute(
     'SELECT prd_list.id,prd_list.main_img AS cartprdImg, prd_list.prd_num AS cartprdNum, prd_list.name AS cartprdName , prd_list.price AS cartprdPrice FROM `prd_list` WHERE id = ?',
     [prdId]
   );
-  console.log(data);
+  // console.log(data);
   res.json(data);
 });
 // router.get('/', async (req, res, next) => {
@@ -23,7 +32,7 @@ router.get('/getPrdDetail', async (req, res, next) => {
 
 // 訂單成立
 router.post('/', async (req, res) => {
-  console.log('in');
+  // console.log('in');
   // 生成orderId(uuid)
   const { v4: uuidv4 } = require('uuid');
 
@@ -35,7 +44,7 @@ router.post('/', async (req, res) => {
   const logistics = req.body.logistics;
 
   const cartList = req.body.cartList;
-  console.log(cartList);
+  // console.log(cartList);
 
   try {
     // orderList: orderId / user_id / total / logistics(1:郵局, 2:黑貓) / logistics_state(出貨狀態, 1) / order_time
@@ -84,10 +93,10 @@ router.post('/', async (req, res) => {
       }
     }
   } catch (e) {
-    console.log(e);
+    // console.log(e);
     return res.status(400).json({ code: 3001, error: e });
   }
-  console.log(orderId);
+  // console.log(orderId);
 
   // console.log(orderId);
 
