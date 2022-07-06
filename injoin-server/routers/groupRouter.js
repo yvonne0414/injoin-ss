@@ -89,6 +89,35 @@ router.post('/post', uploader.single('groupImg'), async (req, res, next) => {
   res.json({ code: 0, result: 'OK' });
 });
 
+// 後台揪團列表
+router.get('/be/list', async (req, res) => {
+  let [data] = await pool.execute(
+    `SELECT group_list.id, group_list.name, group_list.img, group_list.is_official, group_list.status, group_status.status_name FROM group_list JOIN group_status ON group_list.status = group_status.id`
+  );
+  let page = req.query.page || 1;
+  const total = data.length;
+  // 計算總頁數
+  const perPage = 8; // 每一頁有幾筆
+  const lastPage = Math.ceil(total / perPage);
+
+  // 計算要跳過幾筆）
+  let offset = (page - 1) * perPage;
+
+  let [groupListPageData] = await pool.execute(
+    'SELECT group_list.id, group_list.name, group_list.img, group_list.is_official, group_list.status, group_status.status_name FROM group_list JOIN group_status ON group_list.status = group_status.id ORDER BY id DESC LIMIT ? OFFSET ?',
+    [perPage, offset]
+  );
+
+  res.json({
+    pagination: {
+      total,
+      lastPage,
+      page,
+    },
+    data: groupListPageData,
+  });
+});
+
 // 官方、私人 揪團列表（1:官方, 2:私人）
 router.get('/list', async (req, res, next) => {
   // 當前頁面
