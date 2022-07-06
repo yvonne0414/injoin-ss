@@ -340,6 +340,37 @@ router.get('/prdList', async (req, res, next) => {
   });
 });
 
+// 後台商品列表
+router.get(`/be/prdlist`, async (req, res) => {
+  let page = req.query.page || 1;
+
+  let [prdListData] = await pool.execute(
+    'SELECT prd_list.id, prd_list.prd_num AS prdnum, prd_list.name, prd_list.price, prd_list.status, prd_status_cate.name FROM prd_list JOIN prd_status_cate ON prd_list.status = prd_status_cate.id WHERE prd_list.status != 0'
+  );
+
+  const total = prdListData.length;
+  // 計算總頁數
+  const perPage = 8; // 每一頁有幾筆
+  const lastPage = Math.ceil(total / perPage);
+
+  // 計算要跳過幾筆）
+  let offset = (page - 1) * perPage;
+
+  let [prdListPageData] = await pool.execute(
+    'SELECT prd_list.id, prd_list.prd_num AS prdnum, prd_list.name, prd_list.main_img, prd_list.price, prd_list.status, prd_status_cate.name as statusName FROM prd_list JOIN prd_status_cate ON prd_list.status = prd_status_cate.id WHERE prd_list.status != 0 ORDER BY prd_list.id DESC LIMIT ? OFFSET ?',
+    [perPage, offset]
+  );
+
+  res.json({
+    pagination: {
+      total,
+      lastPage,
+      page,
+    },
+    data: prdListPageData,
+  });
+});
+
 router.get('/prdCate', async (req, res, next) => {
   // 大類別
   let [majorPrdSelData] = await pool.execute('SELECT * FROM `prd_detail_cate` WHERE level = 1');
@@ -627,7 +658,7 @@ router.post('/', async (req, res) => {
           let mater = req.body.mater;
           let cateM = req.body.cate_m;
 
-          let [type3Result] = await pool.execute('NSERT INTO prd_type3_detail (prd_id, origin, capacity, mater, cate_m) VALUES (?, ?, ?, ?, ?)', [
+          let [type3Result] = await pool.execute('INSERT INTO prd_type3_detail (prd_id, origin, capacity, mater, cate_m) VALUES (?, ?, ?, ?, ?)', [
             prdListResult.insertId,
             origin,
             capacity,

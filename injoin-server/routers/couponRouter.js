@@ -44,6 +44,31 @@ router.get('/cate', async (req, res) => {
   res.json({ data: cate });
 });
 
+// 後台列表
+router.get('/be/list', async (req, res) => {
+  let [data] = await pool.execute(`SELECT * FROM coupon_list`);
+
+  let page = req.query.page || 1;
+  const total = data.length;
+  // 計算總頁數
+  const perPage = 8; // 每一頁有幾筆
+  const lastPage = Math.ceil(total / perPage);
+
+  // 計算要跳過幾筆）
+  let offset = (page - 1) * perPage;
+
+  let [PageData] = await pool.execute('SELECT * FROM coupon_list ORDER BY id DESC LIMIT ? OFFSET ?', [perPage, offset]);
+
+  res.json({
+    pagination: {
+      total,
+      lastPage,
+      page,
+    },
+    data: PageData,
+  });
+});
+
 // 新增優惠券
 router.post(`/`, async (req, res) => {
   let cate = req.body.cate;
