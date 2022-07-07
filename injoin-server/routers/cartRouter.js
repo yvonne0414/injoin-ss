@@ -42,7 +42,7 @@ router.post('/', async (req, res) => {
   // order_list
   const orderId = uuidv4();
   const userId = req.body.userId;
-  const couponId = req.body.userId || 0;
+  const couponId = req.body.couponId || 0;
   const total = req.body.total;
   const logistics = req.body.logistics;
 

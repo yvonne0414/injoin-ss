@@ -119,6 +119,9 @@ router.post('/register', uploader.single('userphoto'), registerRules, async (req
   // 寫進 user_pwd
   await pool.execute('INSERT INTO user_pwd (user_id, passwd) VALUES(?,?) ', [result.insertId, hashPassword]);
 
+  // 新增ｃｏｐｏｎC
+  await pool.execute('INSERT INTO user_coupon (user_id, coupon_id) VALUES(?,?) ', [result.insertId, 1]);
+
   res.json({ code: 0, result: 'OK' });
 });
 
@@ -211,9 +214,11 @@ router.post('/changeaddress', uploader.single('userphoto'), async (req, res, nex
 // http://localhost:3001/api/auth/changeAbout?userId=10
 
 router.post('/changeAbout', async (req, res, next) => {
-console.log(req.body.userAboutme);
-console.log(req.query.userId);
-let [datas] = await pool.execute('UPDATE user_list SET user_list.about_user = ? WHERE user_list.id = ?',[req.body.userAboutme,req.query.userId])
+// console.log('body',req.body.userAboutme);
+// console.log('body',req.body.about);
+// console.log('query',req.query);
+// console.log('params',req.params);
+// let [datas] = await pool.execute('UPDATE user_list SET user_list.about_user = ? WHERE user_list.id = ?',[req.body.userAboutme,req.query.userId])
 
   res.json({ code: 0, error: 'SUCCESS' });
 
@@ -228,7 +233,7 @@ router.get('/about/:userid', async (req, res, next) => {
 // 個人資訊
 // http://localhost:3001/api/auth/about?userid=1
 router.get('/about', async (req, res, next) => {
-  console.log(req.query.userid);
+  // console.log(req.query.userid);
   let [data] = await pool.execute('SELECT * FROM user_list WHERE id = ?', [req.query.userid]);
   res.json(data);
 });
