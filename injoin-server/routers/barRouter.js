@@ -434,8 +434,9 @@ router.get('/be/list', async (req, res) => {
 // 新增酒譜
 router.post('/', uploader.single('bartdImg'), async (req, res) => {
   let name = req.body.name;
+  let disc = req.body.disc || '';
   let img = req.file ? '/bartending/' + req.file.filename : '';
-  let recipe = req.body.recipe;
+  let recipe = req.body.recipe || '';
   let materialList = req.body.materialList;
   let bartdCateList = req.body.bartdCateList;
   // console.log('data', { name, img, recipe, materialList, bartdCateList });
@@ -461,7 +462,7 @@ router.post('/', uploader.single('bartdImg'), async (req, res) => {
   console.log(bartdCateList);
 
   // bartd_list
-  let [bartdListResult] = await pool.execute('INSERT INTO bartd_list (name, img, recipe) VALUES (?, ?, ?)', [name, img, recipe]);
+  let [bartdListResult] = await pool.execute('INSERT INTO bartd_list (name, img, disc, recipe) VALUES (?, ?, ?, ?)', [name, img, disc, recipe]);
 
   // bartd_material
   for (i = 0; i < materialList.length; i++) {
