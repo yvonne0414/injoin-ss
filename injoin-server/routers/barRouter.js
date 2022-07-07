@@ -45,7 +45,7 @@ const uploader = multer({
   // 一般不會上傳太大的圖片尺寸，以免到時候前端開啟得很慢
   limits: {
     // 1k = 1024
-    fileSize: 500 * 1024,
+    fileSize: 3 * 1024 * 1024,
   },
 });
 
