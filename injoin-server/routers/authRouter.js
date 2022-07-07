@@ -187,17 +187,57 @@ router.post('/changepwd', async (req, res, next) => {
   res.json({ code: 0, error: 'SUCCESS' });
 });
 
+// http://localhost:3001/api/auth/changeaddress?userId=1
+router.post('/changeaddress', uploader.single('userphoto'), async (req, res, next) => {
+  // console.log(req.query.userId);
+  // console.log('register: ', req.body);
+  // console.log(req.file);
+  let [datas] = await pool.execute(`SELECT * FROM user_list WHERE user_list.id = ${req.query.userId}`);
+
+  let photo = req.file ? '/members/' + req.file.filename : datas[0].user_img;
+  // console.log();
+
+  await pool.execute(`UPDATE user_list SET user_list.address_country = ?, user_list.address_detail = ?,user_list.phone = ?, user_list.user_img = ? WHERE user_list.id = ?`, [
+    req.body.userCountry,
+    req.body.userAddressDetail,
+    req.body.userPhone,
+    photo,
+    req.query.userId,
+  ]);
+
+  res.json({ code: 0, error: 'SUCCESS' });
+});
+
+// http://localhost:3001/api/auth/changeAbout?userId=10
+
+router.post('/changeAbout', async (req, res, next) => {
+console.log(req.body.userAboutme);
+console.log(req.query.userId);
+let [datas] = await pool.execute('UPDATE user_list SET user_list.about_user = ? WHERE user_list.id = ?',[req.body.userAboutme,req.query.userId])
+
+  res.json({ code: 0, error: 'SUCCESS' });
+
+});
+
 // /api/auth/about
 router.get('/about/:userid', async (req, res, next) => {
-  let [datas] = await pool.execute('SELECT user_list.name, user_list.email, user_list.user_img FROM `user_list` WHERE id = ? ', [req.params.userid]);
+  let [datas] = await pool.execute('SELECT user_list.name, user_list.email, user_list.user_img,user_list.about_user FROM `user_list` WHERE id = ? ', [req.params.userid]);
   res.json({ datas });
+});
+
+// 個人資訊
+// http://localhost:3001/api/auth/about?userid=1
+router.get('/about', async (req, res, next) => {
+  console.log(req.query.userid);
+  let [data] = await pool.execute('SELECT * FROM user_list WHERE id = ?', [req.query.userid]);
+  res.json(data);
 });
 
 router.get('/logout', (req, res, next) => {
   // 因為我們會依靠判斷 req.session.member 有沒有資料來當作有沒有登入
   // 所以當我們把 req.session.member 設定成 null，那就登出了
-  req.session.destroy()
-  res.clearCookie('connect.sid')
+  req.session.destroy();
+  res.clearCookie('connect.sid');
 
   res.status(202).json({ code: 0, error: 'log out' });
 });

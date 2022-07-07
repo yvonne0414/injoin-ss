@@ -89,6 +89,35 @@ router.post('/post', uploader.single('groupImg'), async (req, res, next) => {
   res.json({ code: 0, result: 'OK' });
 });
 
+// 後台揪團列表
+router.get('/be/list', async (req, res) => {
+  let [data] = await pool.execute(
+    `SELECT group_list.id, group_list.name, group_list.img, group_list.is_official, group_list.status, group_status.status_name FROM group_list JOIN group_status ON group_list.status = group_status.id`
+  );
+  let page = req.query.page || 1;
+  const total = data.length;
+  // 計算總頁數
+  const perPage = 8; // 每一頁有幾筆
+  const lastPage = Math.ceil(total / perPage);
+
+  // 計算要跳過幾筆）
+  let offset = (page - 1) * perPage;
+
+  let [groupListPageData] = await pool.execute(
+    'SELECT group_list.id, group_list.name, group_list.img, group_list.is_official, group_list.status, group_status.status_name FROM group_list JOIN group_status ON group_list.status = group_status.id ORDER BY id DESC LIMIT ? OFFSET ?',
+    [perPage, offset]
+  );
+
+  res.json({
+    pagination: {
+      total,
+      lastPage,
+      page,
+    },
+    data: groupListPageData,
+  });
+});
+
 // 官方、私人 揪團列表（1:官方, 2:私人）
 router.get('/list', async (req, res, next) => {
   // 當前頁面
@@ -155,13 +184,14 @@ router.get('/groupdetail/:groupId', async (req, res, next) => {
 // 我揪的團列表
 router.get('/ownaddgroup', async (req, res, next) => {
   // console.log(req);
+  let nowDate = new Date();
   // 當前頁面
   let page = req.query.page || 1;
   let userId = req.query.userId;
   // 抓資料
   let [allData, fields] = await pool.execute(
-    `SELECT group_list.*, user_list.name as username, tw_county.name as cityName FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code WHERE group_list.user_id = ? AND group_list.status < 3`,
-    [userId]
+    `SELECT group_list.*, user_list.name as username, tw_county.name as cityName FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code WHERE group_list.user_id = ? AND group_list.status < 3 AND group_list.end_time > ?`,
+    [userId, nowDate]
   );
   // 總數
   const total = allData.length;
@@ -175,8 +205,8 @@ router.get('/ownaddgroup', async (req, res, next) => {
 
   // 取得這一頁的資料 select * from table limit ? offet ?
   let [pageData] = await pool.execute(
-    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id  WHERE group_list.user_id = ? AND group_list.status < 3 ORDER BY start_time DESC LIMIT ? OFFSET ?',
-    [userId, perPage, offset]
+    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id  WHERE group_list.user_id = ? AND group_list.status < 3 AND group_list.end_time > ? ORDER BY start_time DESC LIMIT ? OFFSET ?',
+    [userId, nowDate, perPage, offset]
   );
   // console.log(pageData);
   // 取得各個活動參加人員

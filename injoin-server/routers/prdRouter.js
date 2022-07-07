@@ -6,6 +6,7 @@ const pool = require('../utils/db');
 const multer = require('multer');
 const path = require('path');
 const { default: axios } = require('axios');
+const { log } = require('console');
 
 // 圖片上傳需要地方放，在 public 裡，建立了 uploads 檔案夾
 // 設定圖片儲存的位置
@@ -64,24 +65,271 @@ const multi_upload = multer({
   },
 }).array('prdImg[]', 5);
 
+// 商品列表
 router.get('/prdList', async (req, res, next) => {
   // 當前頁面
   let page = req.query.page || 1;
+  let orderById = req.query.orderById || 1;
+  let orderBy = 'price ASC';
+  let category = Number(req.query.category);
+  let cateM = Number(req.query.cateM) || 0;
+  let cateS = Number(req.query.cateS) || 0;
+  let keyword = req.query.keyword || '';
+  let userId = req.query.userId || -1;
 
-  let [allData, fields] = await pool.execute('SELECT * FROM `prd_list` WHERE status = 1 AND category= ?', [req.query.category]);
+  switch (Number(orderById)) {
+    case 1:
+      orderBy = 'price ASC';
+      break;
+    case 2:
+      orderBy = 'price DESC';
+      break;
+    case 3:
+      orderBy = 'rate ASC';
+      break;
+    case 4:
+      orderBy = 'rate DESC';
+      break;
+  }
+
+  let allData = [];
+  if (keyword !== '') {
+    let [Data] = await pool.execute('SELECT * FROM `prd_list` WHERE status = 1 AND category= ? AND prd_list.name LIKE ?', [category, `%${keyword}%`]);
+    allData = Data;
+  } else if (category === 1 && cateS !== 0) {
+    // 查小分類
+    switch (category) {
+      case 1:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_s = ?', [
+            cateS,
+          ]);
+          allData = Data;
+        }
+        break;
+      case 2:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_s = ?', [
+            cateS,
+          ]);
+          allData = Data;
+        }
+        break;
+      case 3:
+      case 4:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_s = ?', [
+            cateS,
+          ]);
+          allData = Data;
+        }
+        break;
+    }
+  } else if (cateM !== 0) {
+    // 查中分類
+    switch (category) {
+      case 1:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_m = ?', [
+            cateM,
+          ]);
+          allData = Data;
+        }
+        break;
+      case 2:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_m = ?', [
+            cateM,
+          ]);
+          allData = Data;
+        }
+        break;
+      case 3:
+      case 4:
+        {
+          let [Data] = await pool.execute('SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_m = ?', [
+            cateM,
+          ]);
+          allData = Data;
+        }
+        break;
+    }
+  } else {
+    // 查大分類
+    let [Data] = await pool.execute('SELECT * FROM `prd_list` WHERE status = 1 AND category= ? ', [category]);
+    allData = Data;
+  }
 
   // 總數
   const total = allData.length;
+  console.log(total);
 
   // 計算總頁數
-  const perPage = 16; // 每一頁有幾筆
+  const perPage = 12; // 每一頁有幾筆
   const lastPage = Math.ceil(total / perPage);
 
   // 計算要跳過幾筆
   let offset = (page - 1) * perPage;
 
   // 取得這一頁的資料 select * from table limit ? offet ?
-  let [pageData] = await pool.execute('SELECT * FROM `prd_list` WHERE status = 1 AND category= ?  LIMIT ? OFFSET ?', [req.query.category, perPage, offset]);
+  let pageData = [];
+  console.log(category);
+  console.log(cateM);
+
+  if (keyword !== '') {
+    let [data] = await pool.execute(`SELECT * FROM prd_list WHERE status = 1 AND category= ? AND prd_list.name LIKE ?  ORDER BY ${orderBy} LIMIT ? OFFSET ?`, [
+      category,
+      `%${keyword}%`,
+      perPage,
+      offset,
+    ]);
+
+    for (let i = 0; i < data.length; i++) {
+      let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+      let isPrdLike = false;
+      if (likeData.length > 0) {
+        isPrdLike = true;
+      }
+      data[i].rate = data[i].rate.toFixed(1);
+      data[i] = { ...data[i], isPrdLike };
+    }
+
+    pageData = data;
+  } else if (category === 1 && cateS !== 0) {
+    // 查小分類
+    switch (category) {
+      case 1:
+        {
+          let [data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateS, perPage, offset]
+          );
+
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+
+          pageData = data;
+        }
+        break;
+      case 2:
+        {
+          let [data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateS, perPage, offset]
+          );
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
+        }
+        break;
+      case 3:
+      case 4:
+        {
+          let [data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_s = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateS, perPage, offset]
+          );
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
+        }
+        break;
+    }
+  } else if (cateM !== 0) {
+    // 查中分類
+    switch (category) {
+      case 1:
+        {
+          let [data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type1_detail ON prd_list.id = prd_type1_detail.prd_id WHERE prd_type1_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateM, perPage, offset]
+          );
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
+        }
+        break;
+      case 2:
+        {
+          let [data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type2_detail ON prd_list.id = prd_type2_detail.prd_id WHERE prd_type2_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateM, perPage, offset]
+          );
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
+        }
+        break;
+      case 3:
+      case 4:
+        {
+          let [data] = await pool.execute(
+            `SELECT prd_list.* FROM prd_list JOIN prd_type3_detail ON prd_list.id = prd_type3_detail.prd_id WHERE prd_type3_detail.cate_m = ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+            [cateM, perPage, offset]
+          );
+          for (let i = 0; i < data.length; i++) {
+            let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+            let isPrdLike = false;
+            if (likeData.length > 0) {
+              isPrdLike = true;
+            }
+            data[i].rate = data[i].rate.toFixed(1);
+            data[i] = { ...data[i], isPrdLike };
+          }
+          pageData = data;
+        }
+        break;
+    }
+  } else {
+    // 查大分類
+    let [data] = await pool.execute(`SELECT * FROM prd_list WHERE status = 1 AND category= ?  ORDER BY ${orderBy} LIMIT ? OFFSET ?`, [category, perPage, offset]);
+    for (let i = 0; i < data.length; i++) {
+      let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+      let isPrdLike = false;
+      if (likeData.length > 0) {
+        isPrdLike = true;
+      }
+      data[i].rate = data[i].rate.toFixed(1);
+      data[i] = { ...data[i], isPrdLike };
+    }
+    pageData = data;
+  }
+
   res.json({
     pagination: {
       total,
@@ -89,6 +337,37 @@ router.get('/prdList', async (req, res, next) => {
       page,
     },
     data: pageData,
+  });
+});
+
+// 後台商品列表
+router.get(`/be/prdlist`, async (req, res) => {
+  let page = req.query.page || 1;
+
+  let [prdListData] = await pool.execute(
+    'SELECT prd_list.id, prd_list.prd_num AS prdnum, prd_list.name, prd_list.price, prd_list.status, prd_status_cate.name FROM prd_list JOIN prd_status_cate ON prd_list.status = prd_status_cate.id WHERE prd_list.status != 0'
+  );
+
+  const total = prdListData.length;
+  // 計算總頁數
+  const perPage = 8; // 每一頁有幾筆
+  const lastPage = Math.ceil(total / perPage);
+
+  // 計算要跳過幾筆）
+  let offset = (page - 1) * perPage;
+
+  let [prdListPageData] = await pool.execute(
+    'SELECT prd_list.id, prd_list.prd_num AS prdnum, prd_list.name, prd_list.main_img, prd_list.price, prd_list.status, prd_status_cate.name as statusName FROM prd_list JOIN prd_status_cate ON prd_list.status = prd_status_cate.id WHERE prd_list.status != 0 ORDER BY prd_list.id DESC LIMIT ? OFFSET ?',
+    [perPage, offset]
+  );
+
+  res.json({
+    pagination: {
+      total,
+      lastPage,
+      page,
+    },
+    data: prdListPageData,
   });
 });
 
@@ -102,12 +381,12 @@ router.get('/prdCate', async (req, res, next) => {
   let majorPrdSel = [];
   let subPrdSel = [[], [], [], []];
   let thirdPrdSel = [[], [], [], [], [], [], [], []];
-  console.log(majorPrdSelData);
+  // console.log(majorPrdSelData);
   majorPrdSel = majorPrdSelData.map((v, i) => {
-    console.log(v);
+    // console.log(v);
     return v.name;
   });
-  console.log(subPrdSelData);
+  // console.log(subPrdSelData);
   subPrdSelData.map((v) => {
     // console.log(v.name);
     switch (v.parent_id) {
@@ -136,37 +415,88 @@ router.get('/prdCate', async (req, res, next) => {
   res.json({ majorPrdSel, subPrdSel });
 });
 
+// 商品細節
 router.get('/detail/:prdId', async (req, res, next) => {
   // 商品細項用到的名稱
-  let [detailData] = await pool.execute(
-    'SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.main_img, prd_list.disc, prd_type1_detail.cate_m, prd_type1_detail.cate_s, prd_list.rate, prd_type1_detail.brand,prd_type1_detail.capacity, prd_origin.name AS originName FROM prd_list JOIN prd_type1_detail on prd_list.id = prd_type1_detail.prd_id JOIN prd_origin ON prd_type1_detail.origin = prd_origin.id WHERE prd_list.id = ?',
-    [req.params.prdId]
-  );
+  let userId = req.query.userId || -1;
+  let prdId = req.params.prdId;
+  let [cateL] = await pool.execute(`SELECT category FROM prd_list WHERE prd_list.id = ?`, [req.params.prdId]);
+  // console.log('cateL:', cateL[0].category);
+  cateL = cateL[0].category;
+  let detailData = [];
+  switch (cateL) {
+    case 1:
+      let [type1List] = await pool.execute(
+        'SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.main_img, prd_list.disc, prd_type1_detail.cate_m, prd_type1_detail.cate_s, prd_list.rate, prd_type1_detail.abv, prd_type1_detail.brand,prd_type1_detail.capacity, prd_origin.name AS originName FROM prd_list JOIN prd_type1_detail on prd_list.id = prd_type1_detail.prd_id JOIN prd_origin ON prd_type1_detail.origin = prd_origin.id WHERE prd_list.id = ?',
+        [prdId]
+      );
+      detailData.push(type1List[0]);
+      break;
+    case 2:
+      {
+        let [type2List] = await pool.execute(
+          'SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.main_img, prd_list.disc, prd_type2_detail.cate_m, prd_list.rate, prd_type2_detail.brand,prd_type2_detail.capacity, prd_origin.name AS originName FROM prd_list JOIN prd_type2_detail on prd_list.id = prd_type2_detail.prd_id JOIN prd_origin ON prd_type2_detail.origin = prd_origin.id WHERE prd_list.id = ?',
+          [prdId]
+        );
+        detailData.push(type2List[0]);
+      }
+      break;
+    case 3:
+    case 4:
+      {
+        let [type3List] = await pool.execute(
+          'SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.main_img, prd_list.disc, prd_type3_detail.cate_m, prd_list.rate, prd_type3_detail.capacity, prd_material_cate.name AS materName, prd_origin.name AS originName FROM prd_list JOIN prd_type3_detail on prd_list.id = prd_type3_detail.prd_id JOIN prd_origin ON prd_type3_detail.origin = prd_origin.id JOIN prd_material_cate ON prd_material_cate.id =prd_type3_detail.mater WHERE prd_list.id = ?',
+          [prdId]
+        );
+        detailData.push(type3List[0]);
+      }
+      break;
+  }
+
   // console.log(detailData);
 
-  console.log(detailData[0].cate_m);
-  console.log(detailData[0].cate_s);
+  // console.log(detailData);
+  // console.log(detailData[0].cate_m);
+  // console.log(detailData[0].cate_s);
 
   // 中分類的 prd_detail_cate 的 Name (cate_m)
   let [cateMNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_m]);
   let cateMName = cateMNameData[0].name;
-  // 小分類的 prd_detail_cate 的 Name (cate_s)
-  let [cateSNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_s]);
-  let cateSName = cateSNameData[0].name;
 
-  detailData[0] = { ...detailData[0], cateMName, cateSName };
+  // 是否加入最愛
+  let [isLikeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id= ? AND prd_id = ?`, [userId, prdId]);
+  let isLike = false;
+  if (isLikeData.length > 0) {
+    isLike = true;
+  }
+  detailData[0] = { ...detailData[0], cateMName, isLike };
+
+  if (cateL === 1) {
+    // 小分類的 prd_detail_cate 的 Name (cate_s)
+    let [cateSNameData] = await pool.execute('SELECT name FROM prd_detail_cate WHERE id = ?', [detailData[0].cate_s]);
+    let cateSName = cateSNameData[0].name;
+    detailData[0] = { ...detailData[0], cateMName, cateSName };
+  }
 
   let [detailImgData] = await pool.execute('SELECT url  FROM `prd_img` WHERE prd_id = ?', [req.params.prdId]);
   // console.log(detailImgData);
 
   // detailImgData.unshift(url: detailData[0].main_img);
+  detailData[0].rate = detailData[0].rate.toFixed(1);
 
   let detailImgList = [detailData[0].main_img];
   for (i = 0; i < detailImgData.length; i++) {
     detailImgList.push(detailImgData[i].url);
   }
 
-  res.json({ detailData: [detailData[0]], detailImgList });
+  res.json({ cateL: cateL, detailData: [detailData[0]], detailImgList });
+});
+
+// 熱門商品
+router.get('/hot', async (req, res) => {
+  let [data] = await pool.execute('SELECT id, name, main_img FROM `prd_list` ORDER BY `prd_list`.`sale_quantity` DESC LIMIT 10');
+
+  res.json({ data });
 });
 
 // 類別
@@ -189,10 +519,62 @@ router.get('/material', async (req, res) => {
   res.json({ data: material });
 });
 
+// 相關商品
+router.get(`/related/:prdId`, async (req, res) => {
+  let cateM = req.query.cateM;
+  // let cateM = req.query.cateM;
+  let prdId = req.params.prdId;
+  let userId = req.query.userId || -1;
+  // console.log(prdId);
+  try {
+    let data = [];
+    // console.log(cateM);
+    // console.log(cateM.length);
+    for (let i = 0; i < cateM.length; i++) {
+      // console.log(cateM[i]);
+      let [type1res] = await pool.execute(
+        `SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.rate, prd_list.main_img FROM prd_list JOIN prd_type1_detail ON  prd_list.id = prd_type1_detail.prd_id  WHERE cate_m = ? AND prd_list.status = 1`,
+        [Number(cateM[i])]
+      );
+      let [type2res] = await pool.execute(
+        `SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.rate, prd_list.main_img FROM prd_list JOIN prd_type2_detail ON  prd_list.id = prd_type2_detail.prd_id  WHERE cate_m = ? AND prd_list.status = 1`,
+        [Number(cateM[i])]
+      );
+      let [type3res] = await pool.execute(
+        `SELECT prd_list.id, prd_list.name, prd_list.price, prd_list.rate , prd_list.main_img FROM prd_list JOIN prd_type3_detail ON  prd_list.id = prd_type3_detail.prd_id  WHERE cate_m = ? AND prd_list.status = 1`,
+        [Number(cateM[i])]
+      );
+
+      type1res.map((item) => {
+        Number(prdId) !== item.id && data.push(item);
+      });
+      type2res.map((item) => {
+        Number(prdId) !== item.id && data.push(item);
+      });
+      type3res.map((item) => {
+        Number(prdId) !== item.id && data.push(item);
+      });
+    }
+
+    for (let i = 0; i < data.length; i++) {
+      let [likeData] = await pool.execute(`SELECT * FROM user_like WHERE user_id = ? AND prd_id =?`, [userId, data[i].id]);
+      let isPrdLike = false;
+      if (likeData.length > 0) {
+        isPrdLike = true;
+      }
+      data[i] = { ...data[i], isPrdLike };
+    }
+
+    res.json({ data: data });
+  } catch (e) {
+    console.error(e);
+  }
+});
+
 // 新增商品
 router.post('/', async (req, res) => {
   multi_upload(req, res, async function (err) {
-    console.log(req.body);
+    // console.log(req.body);
     if (err instanceof multer.MulterError) {
       // A Multer error occurred when uploading.
       res
@@ -285,7 +667,7 @@ router.post('/', async (req, res) => {
           let mater = req.body.mater;
           let cateM = req.body.cate_m;
 
-          let [type3Result] = await pool.execute('NSERT INTO prd_type3_detail (prd_id, origin, capacity, mater, cate_m) VALUES (?, ?, ?, ?, ?)', [
+          let [type3Result] = await pool.execute('INSERT INTO prd_type3_detail (prd_id, origin, capacity, mater, cate_m) VALUES (?, ?, ?, ?, ?)', [
             prdListResult.insertId,
             origin,
             capacity,
