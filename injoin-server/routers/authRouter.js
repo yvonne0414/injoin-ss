@@ -61,7 +61,7 @@ const uploader = multer({
 const { body, validationResult } = require('express-validator');
 const registerRules = [
   body('useremail').isEmail().withMessage('Email 欄位請填寫正確格式'),
-  body('userpassword').isLength({ min: 8 }).withMessage('密碼長度至少為8'),
+  body('userpassword').isLength({ min: 2}).withMessage('密碼長度至少為8'),
   body('userconfirmpassword')
     .custom((value, { req }) => {
       return value === req.body.userpassword;
@@ -214,14 +214,13 @@ router.post('/changeaddress', uploader.single('userphoto'), async (req, res, nex
 // http://localhost:3001/api/auth/changeAbout?userId=10
 
 router.post('/changeAbout', async (req, res, next) => {
-// console.log('body',req.body.userAboutme);
-// console.log('body',req.body.about);
-// console.log('query',req.query);
-// console.log('params',req.params);
-// let [datas] = await pool.execute('UPDATE user_list SET user_list.about_user = ? WHERE user_list.id = ?',[req.body.userAboutme,req.query.userId])
+  // console.log('body',req.body.userAboutme);
+  // console.log('body',req.body.about);
+  // console.log('query',req.query);
+  // console.log('params',req.params);
+  let [datas] = await pool.execute('UPDATE user_list SET user_list.about_user = ? WHERE user_list.id = ?', [req.body.userAboutme, req.query.userId]);
 
   res.json({ code: 0, error: 'SUCCESS' });
-
 });
 
 // /api/auth/about
