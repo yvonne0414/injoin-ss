@@ -123,6 +123,16 @@ router.get('/list', async (req, res, next) => {
   // 當前頁面
   let page = req.query.page || 1;
   let groupCate = req.query.groupCate;
+  let now = new Date().toLocaleDateString();
+
+  // 更新活動狀態 1:報名 2:進行中 3:已額滿（審核時更新） 4:已結束
+  // 人數額滿時：更新成員審核狀態
+  let [updGroupStatusAudit] = await pool.execute('UPDATE `group_list` SET `status`=3 WHERE max_num = now_num AND start_time > ?', [now]);
+
+  // 活動開始 -> 進行中， 活動結束 ->已結束
+  let [updGroupStatusStart] = await pool.execute('UPDATE `group_list` SET `status`=2 WHERE start_time < ? AND end_time > ?', [now, now]);
+  let [updGroupStatusEnd] = await pool.execute('UPDATE `group_list` SET `status`=4 WHERE  start_time < ? AND end_time < ?', [now, now]);
+
   // 抓資料
   let [allData, fields] = await pool.execute(
     `SELECT group_list.*, user_list.name as username, tw_county.name as cityName FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code WHERE group_list.is_official =? AND group_list.status < 4 AND group_list.status > 0`,
@@ -238,15 +248,34 @@ router.get('/participant', async (req, res, next) => {
   // console.log(req);
   // 當前頁面
   let page = req.query.page || 1;
-  let userId = req.query.userId;
+  let userId = req.query.userId || -1;
   let groupMaxStatus = req.query.groupMaxStatus;
   let groupMinStatus = req.query.groupMinStatus;
   let groupCate = req.query.groupCate;
+  let now = new Date().toLocaleDateString();
+
+  // 更新活動狀態 1:報名 2:進行中 3:已額滿（審核時更新） 4:已結束
+
+  // 人數額滿時：更新成員審核狀態
+  let [updGroupStatusAudit] = await pool.execute('UPDATE `group_list` SET `status`=3 WHERE max_num = now_num AND start_time > ?', [now]);
+
+  // 活動開始 -> 進行中， 活動結束 ->已結束
+  let [updGroupStatusStart] = await pool.execute('UPDATE `group_list` SET `status`=2 WHERE start_time < ? AND end_time > ?', [now, now]);
+  let [updGroupStatusEnd] = await pool.execute('UPDATE `group_list` SET `status`=4 WHERE  start_time < ? AND end_time < ?', [now, now]);
+
   // 抓資料
-  let [allData, fields] = await pool.execute(
-    `SELECT group_participant.* ,group_list.*, group_status.status_name, tw_county.name AS cityName, user_list.name AS user_name FROM group_participant JOIN group_list ON group_participant.group_id=group_list.id JOIN group_status ON group_list.status=group_status.id JOIN tw_county ON group_list.place_conuntry=tw_county.code JOIN user_list ON group_participant.user_id=user_list.id WHERE group_participant.user_id= ? AND group_list.status < ? AND group_list.status > ? AND group_list.is_official = ?`,
-    [userId, groupMaxStatus, groupMinStatus, groupCate]
-  );
+  let allData;
+  if (groupMaxStatus !== 4) {
+    [allData, fields] = await pool.execute(
+      `SELECT group_participant.* ,group_list.*, group_status.status_name, tw_county.name AS cityName, user_list.name AS user_name FROM group_participant JOIN group_list ON group_participant.group_id=group_list.id JOIN group_status ON group_list.status=group_status.id JOIN tw_county ON group_list.place_conuntry=tw_county.code JOIN user_list ON group_participant.user_id=user_list.id WHERE group_participant.user_id= ? AND group_list.status < ? AND group_list.status > ? AND group_list.is_official = ?`,
+      [userId, groupMaxStatus, groupMinStatus, groupCate]
+    );
+  } else {
+    [allData, fields] = await pool.execute(
+      `SELECT group_participant.* ,group_list.*, group_status.status_name, tw_county.name AS cityName, user_list.name AS user_name FROM group_participant JOIN group_list ON group_participant.group_id=group_list.id JOIN group_status ON group_list.status=group_status.id JOIN tw_county ON group_list.place_conuntry=tw_county.code JOIN user_list ON group_participant.user_id=user_list.id WHERE group_participant.user_id= ? AND group_list.status < ? AND group_list.status > ? AND group_list.is_official = ? AND group_list.end_time < ?`,
+      [userId, groupMaxStatus, groupMinStatus, groupCate]
+    );
+  }
   // 總數
   const total = allData.length;
 
@@ -405,6 +434,7 @@ router.get('/memberlist/:groupId', async (req, res) => {
 // 審核成員
 router.post('/checkmember/:groupId', async (req, res) => {
   let memberId = req.body.memberId;
+  let now = new Date().toLocaleDateString();
   // 先確認人數未達上限
   let [nowmember] = await pool.execute('SELECT max_num, now_num FROM group_list WHERE id= ?', [req.params.groupId]);
   if (nowmember[0].max_num === nowmember[0].now_num) {
@@ -420,6 +450,17 @@ router.post('/checkmember/:groupId', async (req, res) => {
   let [member] = await pool.execute('SELECT * FROM group_participant WHERE group_id = ? AND audit_status = 1', [req.params.groupId]);
   // 更新參與人數
   let [addmembernum] = await pool.execute('UPDATE group_list SET now_num = ? WHERE id = ?', [member.length, req.params.groupId]);
+
+  // TODO: 當人數與最高人數相同則變為人數: 已額滿
+  if (Number(nowmember[0].max_num) === Number(member.length)) {
+    // 更新活動狀態 1:報名 2:進行中 3:已額滿（審核時更新） 4:已結束
+    // 人數額滿時：更新成員審核狀態
+    let [updGroupStatusAudit] = await pool.execute('UPDATE `group_list` SET `status`=3 WHERE max_num = now_num AND start_time > ?', [now]);
+    // console.log(updGroupStatusAudit);
+
+    // 人數已額滿：更新成員審核狀態
+    let [updPartStatus] = await pool.execute('UPDATE `group_participant` SET `audit_status`=2 WHERE group_id = ?', [req.params.groupId]);
+  }
 
   // response
   res.json({ code: 0, result: 'OK' });
