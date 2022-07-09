@@ -6,10 +6,11 @@ const pool = require('../utils/db');
 router.get('/getUserCoupon', async (req, res, next) => {
   // console.log(req.query.userId);
   userId = req.query.userId || 1;
+  let now = new Date();
   // console.log(userId);
   let [data] = await pool.execute(
-    `SELECT user_coupon.*,coupon_list.name,coupon_list.discount ,coupon_list.rule_min FROM user_coupon JOIN coupon_list ON user_coupon.coupon_id = coupon_list.id WHERE user_id = ? AND coupon_list.coupon_cate = 1`,
-    [userId]
+    `SELECT user_coupon.*,coupon_list.name,coupon_list.discount ,coupon_list.rule_min FROM user_coupon JOIN coupon_list ON user_coupon.coupon_id = coupon_list.id WHERE user_id = ? AND coupon_list.coupon_cate = 1 AND coupon_list.end_time > ?`,
+    [userId, now]
   );
   res.json(data);
 });
@@ -74,8 +75,12 @@ router.post('/', async (req, res) => {
       let [updConsumption] = await pool.execute('UPDATE user_list SET consumption = ? WHERE id = ?', [newConsumption, userId]);
     }
 
+    // 刪除已使用優惠券
+    let [delUserCoupon] = await pool.execute('DELETE FROM `user_coupon` WHERE user_id = ? AND coupon_id = ?', [userId, couponId]);
+
     // orderDetail: orderId / prd_id / amount / price / subtotal / is_review(0) / is_packaging(0) / packaging_cate(1)
     for (i = 0; i < cartList.length; i++) {
+      // insert into detail
       let [detailResult] = await pool.execute(
         'INSERT INTO `order_detail` (`order_id`, `prd_id`, `price`, `amount`, `subtotal`, `is_review`, `is_packaging`, `packaging_cate`) VALUES (?, ?, ?, ?, ?, 0, 0, 1)',
         [orderId, cartList[i].prdId, cartList[i].price, cartList[i].amount, cartList[i].subTotal]

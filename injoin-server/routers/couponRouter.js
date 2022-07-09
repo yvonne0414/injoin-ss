@@ -4,8 +4,8 @@ const pool = require('../utils/db');
 
 router.get('/couponList/', async (req, res, next) => {
   // 取得當前時間
-  const date = new Date();
-  console.log(date.toLocaleDateString());
+  const date = new Date().toLocaleDateString();
+  console.log(date);
 
   // 當前頁面
   let page = req.query.page || 1;

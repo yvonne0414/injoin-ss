@@ -25,6 +25,9 @@ router.use('/detail/:orderId', async (req, res, next) => {
   );
   console.log(orderDetailData);
 
+  // 優惠券資料
+  let [couponData] = await pool.execute('SELECT * FROM `coupon_list` WHERE id = ?', [orderDetailData[0].coupon_id]);
+
   let [orderPrd] = await pool.execute(
     `SELECT prd_list.id,prd_list.prd_num,prd_list.name,prd_list.price,order_detail.amount,prd_list.category,prd_list.status,prd_list.main_img,prd_list.inventory_quantity FROM order_detail JOIN prd_list ON order_detail.prd_id = prd_list.id WHERE order_id = ?`,
     [req.params.orderId]
@@ -34,7 +37,7 @@ router.use('/detail/:orderId', async (req, res, next) => {
   // res.json({
   //   data: orderDetailData,
   // });
-  res.json({ orderuser: orderUser, data: orderDetailData, orderprd: orderPrd });
+  res.json({ orderuser: orderUser, data: orderDetailData, orderprd: orderPrd, couponData: couponData[0] });
 
   // {orderuser:orderUser, orederDetail:orderDetailData, orderprd:orderPrd}
 });
