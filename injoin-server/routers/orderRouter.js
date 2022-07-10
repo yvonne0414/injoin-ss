@@ -88,12 +88,44 @@ router.get('/', async (req, res, next) => {
   });
 });
 
-//訂單列表
-// router.get('/', async (req, res, next) => {
-//   let [data, fields] = await pool.execute(
-//     'SELECT order_list.*, user_list.name as userName, logistics_state_cate.name as logiStaCateName, logistics_cate.name as logiCateName FROM order_list JOIN user_list ON order_list.user_id = user_list.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id;'
-//   );
-//   res.json(data);
-// });
+// 後台訂單列表
+// orderId、 訂購人、金額、狀態、時間、（查看、完成訂單）
+router.get('/be/list', async (req, res) => {
+  let page = req.query.page || 1;
+  let logisticsState = req.query.logisticsState || 1;
+
+  let [result] = await pool.execute(
+    'SELECT order_list.*, logistics_state_cate.name AS logisticsStateName, user_list.name AS userName FROM order_list JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id JOIN user_list ON order_list.user_id = user_list.id WHERE order_list.logistics_state = ?',
+    [logisticsState]
+  );
+  const total = result.length;
+  // 計算總頁數
+  const perPage = 8; // 每一頁有幾筆
+  const lastPage = Math.ceil(total / perPage);
+
+  // 計算要跳過幾筆）
+  let offset = (page - 1) * perPage;
+
+  let [pageResult] = await pool.execute(
+    'SELECT order_list.*, logistics_state_cate.name AS logisticsStateName, user_list.name AS userName FROM order_list JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id JOIN user_list ON order_list.user_id = user_list.id WHERE order_list.logistics_state = ? ORDER BY order_list.order_time DESC LIMIT ? OFFSET ?',
+    [logisticsState, perPage, offset]
+  );
+
+  res.json({
+    pagination: {
+      total,
+      lastPage,
+      page,
+    },
+    data: pageResult,
+  });
+});
+
+// 後台完成訂單
+router.post('/be/toFinish', async (req, res) => {
+  let orderId = req.body.orderId;
+  let [result] = await pool.execute('UPDATE `order_list` SET `logistics_state`=3 WHERE id = ?', [orderId]);
+  res.json({ code: 0, result: 'ok' });
+});
 
 module.exports = router;
