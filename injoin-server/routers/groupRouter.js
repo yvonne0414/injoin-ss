@@ -272,8 +272,8 @@ router.get('/participant', async (req, res, next) => {
     );
   } else {
     [allData, fields] = await pool.execute(
-      `SELECT group_participant.* ,group_list.*, group_status.status_name, tw_county.name AS cityName, user_list.name AS user_name FROM group_participant JOIN group_list ON group_participant.group_id=group_list.id JOIN group_status ON group_list.status=group_status.id JOIN tw_county ON group_list.place_conuntry=tw_county.code JOIN user_list ON group_participant.user_id=user_list.id WHERE group_participant.user_id= ? AND group_list.status < ? AND group_list.status > ? AND group_list.is_official = ? AND group_list.end_time < ?`,
-      [userId, groupMaxStatus, groupMinStatus, groupCate]
+      `SELECT group_participant.* ,group_list.*, group_status.status_name, tw_county.name AS cityName, user_list.name AS user_name FROM group_participant JOIN group_list ON group_participant.group_id=group_list.id JOIN group_status ON group_list.status=group_status.id JOIN tw_county ON group_list.place_conuntry=tw_county.code JOIN user_list ON group_participant.user_id=user_list.id WHERE group_participant.user_id= ? AND group_list.status < ? AND group_list.status > ? AND group_list.is_official = ? AND group_list.end_time < ? AND group_participant.audit_status = 1`,
+      [userId, groupMaxStatus, groupMinStatus, groupCate, now]
     );
   }
   // 總數

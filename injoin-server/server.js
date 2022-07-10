@@ -105,9 +105,14 @@ app.use('/api/member', MemberRouter);
 const UserRouter = require('./routers/userRouter');
 app.use('/api/userlike', UserRouter);
 
+// 重製密碼
+const ResetRouter = require('./routers/resetRouter')
+app.use("/api/reset",ResetRouter)
+
 // global
 const GlobalRouter = require('./routers/globalRouter');
 app.use('/api', GlobalRouter);
+
 
 // 會跳到最下方 5xx error
 app.get('/error', (req, res, next) => {
