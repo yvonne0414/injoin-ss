@@ -291,7 +291,18 @@ router.get('/', async (req, res, next) => {
   barIdList = [...new Set(barIdList)];
   console.log(barIdList);
   barIdListStr = barIdList.join(',');
-  console.log(barIdListStr);
+  // console.log(barIdListStr);
+  if (barIdList.length === 0) {
+    res.json({
+      pagination: {
+        total: 0,
+        lastPage: 1,
+        page,
+      },
+      data: [],
+    });
+    return;
+  }
 
   let allData = [];
   // 有查詢
