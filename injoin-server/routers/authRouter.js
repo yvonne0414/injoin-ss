@@ -122,6 +122,9 @@ router.post('/register', uploader.single('userphoto'), registerRules, async (req
   // 新增ｃｏｐｏｎC
   await pool.execute('INSERT INTO user_coupon (user_id, coupon_id) VALUES(?,?) ', [result.insertId, 1]);
 
+  // await pool.execute('INSERT INTO CD')
+  // await pool.execute("")
+
   res.json({ code: 0, result: 'OK' });
 });
 
