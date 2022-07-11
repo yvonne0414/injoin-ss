@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： localhost
--- 產生時間： 2022 年 07 月 11 日 18:31
+-- 產生時間： 2022 年 07 月 11 日 18:39
 -- 伺服器版本： 10.4.21-MariaDB
 -- PHP 版本： 7.4.28
 
@@ -1855,7 +1855,7 @@ CREATE TABLE `user_pwd` (
 --
 
 INSERT INTO `user_pwd` (`user_id`, `passwd`) VALUES
-(1, '$2b$10$ulsOEU/hwqel05IEpC3t4e7XFtv93Zc3/HDKJEAn4gTkfMOG4nUoC');
+(0, '$2b$10$ulsOEU/hwqel05IEpC3t4e7XFtv93Zc3/HDKJEAn4gTkfMOG4nUoC');
 
 -- --------------------------------------------------------
 
@@ -2281,7 +2281,7 @@ ALTER TABLE `user_list`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `user_pwd`
 --
 ALTER TABLE `user_pwd`
-  MODIFY `user_id` int(3) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `user_id` int(3) NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用資料表自動遞增(AUTO_INCREMENT) `vip_level`
