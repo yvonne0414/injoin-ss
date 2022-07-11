@@ -46,21 +46,19 @@ router.post('/', async (req, res) => {
   const couponId = req.body.couponId || 0;
   const total = req.body.total;
   const logistics = req.body.logistics;
-  const orderer_name = req.body.orderer_name;
-  const address_country = req.body.address_country;
-  const address_detail = req.body.address_detail;
-  const orderer_phone = req.body.orderer_phone;
-  const orderer_email = req.body.orderer_email;
 
   const cartList = req.body.cartList;
   // console.log(cartList);
 
   try {
     // orderList: orderId / user_id / total / logistics(1:郵局, 2:黑貓) / logistics_state(出貨狀態, 1) / order_time
-    let [result] = await pool.execute(
-      'INSERT INTO `order_list` (`id`, `user_id`,`coupon_id`, `total`, `logistics`, `logistics_state`, `orderer_name`, `address_country`, `address_detail`, `orderer_phone`, `orderer_email`) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)',
-      [orderId.toString(), userId, couponId, total, logistics, orderer_name, address_country, address_detail, orderer_phone, orderer_email]
-    );
+    let [result] = await pool.execute('INSERT INTO `order_list` (`id`, `user_id`,`coupon_id`, `total`, `logistics`, `logistics_state`) VALUES (?, ?, ?, ?, ?, 1)', [
+      orderId.toString(),
+      userId,
+      couponId,
+      total,
+      logistics,
+    ]);
 
     // 檢查是否需升級 並 更新消費金額
     let [userInfoList] = await pool.execute('SELECT vip_level, consumption FROM user_list WHERE id = ?', [userId]);

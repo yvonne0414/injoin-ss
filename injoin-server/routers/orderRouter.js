@@ -20,7 +20,7 @@ router.use('/detail/:orderId', async (req, res, next) => {
   // console.log(orderUser);
 
   let [orderDetailData, fields] = await pool.execute(
-    `SELECT order_list.*, tw_county.name AS countyName, logistics_state_cate.name AS logisticsStatename, logistics_cate.name AS logisticsCateName FROM order_list JOIN tw_county ON tw_county.code = order_list.address_country JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id WHERE order_list.id = ?`,
+    `SELECT order_list.*, logistics_state_cate.name AS logisticsStatename, logistics_cate.name AS logisticsCateName FROM order_list JOIN logistics_state_cate ON order_list.logistics_state = logistics_state_cate.id JOIN logistics_cate ON order_list.logistics = logistics_cate.id WHERE order_list.id = ?`,
     [req.params.orderId]
   );
   console.log(orderDetailData);
