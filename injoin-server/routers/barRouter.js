@@ -289,26 +289,27 @@ router.get('/', async (req, res, next) => {
     barIdList.push(item.bartd_id);
   });
   barIdList = [...new Set(barIdList)];
-  // console.log(barIdList);
+  console.log(barIdList);
   barIdListStr = barIdList.join(',');
-  // console.log(barIdListStr);
+  console.log(barIdListStr);
 
   let allData = [];
   // 有查詢
   if (keyword !== '') {
-    let [data] = await pool.execute(`SELECT * FROM bartd_list WHERE bartd_list.id IN (?) AND bartd_list.name LIKE ?`, [barIdListStr, `%${keyword}%`]);
+    let [data] = await pool.execute(`SELECT * FROM bartd_list WHERE bartd_list.id IN (${barIdListStr}) AND bartd_list.name LIKE ?`, [`%${keyword}%`]);
     allData = data;
   } else if (cateS !== 0) {
     //有小分類
     let [data] = await pool.execute(
-      `SELECT bartd_list.*, bartd_cate_list.bartd_cate_id_m, bartd_cate_list.bartd_cate_id_s FROM bartd_list JOIN bartd_cate_list ON bartd_list.id = bartd_cate_list.bartd_id WHERE bartd_list.id IN (?)  AND bartd_cate_list.bartd_cate_id_s = ?`,
-      [barIdListStr, cateS]
+      `SELECT bartd_list.*, bartd_cate_list.bartd_cate_id_m, bartd_cate_list.bartd_cate_id_s FROM bartd_list JOIN bartd_cate_list ON bartd_list.id = bartd_cate_list.bartd_id WHERE bartd_list.id IN (${barIdListStr})  AND bartd_cate_list.bartd_cate_id_s = ?`,
+      [cateS]
     );
     allData = data;
   } else {
-    let [data] = await pool.execute(`SELECT bartd_list.* FROM bartd_list WHERE bartd_list.id IN (?)`, [`${barIdListStr}`]);
+    let [data] = await pool.execute(`SELECT bartd_list.* FROM bartd_list WHERE bartd_list.id IN (${barIdListStr})`);
     allData = data;
   }
+  console.log(allData);
 
   // 總數
   const total = allData.length;
@@ -325,8 +326,7 @@ router.get('/', async (req, res, next) => {
   let pageData = [];
 
   if (keyword !== '') {
-    let [data] = await pool.execute(`SELECT * FROM bartd_list WHERE bartd_list.id IN (?) AND bartd_list.name LIKE ? LIMIT ? OFFSET ?`, [
-      barIdListStr,
+    let [data] = await pool.execute(`SELECT * FROM bartd_list WHERE bartd_list.id IN (${barIdListStr}) AND bartd_list.name LIKE ? LIMIT ? OFFSET ?`, [
       `%${keyword}%`,
       perPage,
       offset,
@@ -353,8 +353,8 @@ router.get('/', async (req, res, next) => {
   } else if (cateS !== 0) {
     //有小分類
     let [data] = await pool.execute(
-      `SELECT bartd_list.*, bartd_cate_list.bartd_cate_id_m, bartd_cate_list.bartd_cate_id_s FROM bartd_list JOIN bartd_cate_list ON bartd_list.id = bartd_cate_list.bartd_id WHERE bartd_list.id IN (?)  AND bartd_cate_list.bartd_cate_id_s = ? LIMIT ? OFFSET ?`,
-      [barIdListStr, cateS, perPage, offset]
+      `SELECT bartd_list.*, bartd_cate_list.bartd_cate_id_m, bartd_cate_list.bartd_cate_id_s FROM bartd_list JOIN bartd_cate_list ON bartd_list.id = bartd_cate_list.bartd_id WHERE bartd_list.id IN (${barIdListStr})  AND bartd_cate_list.bartd_cate_id_s = ? LIMIT ? OFFSET ?`,
+      [cateS, perPage, offset]
     );
 
     let newData = [];
@@ -376,7 +376,7 @@ router.get('/', async (req, res, next) => {
 
     pageData = newData;
   } else {
-    let [data] = await pool.execute(`SELECT bartd_list.* FROM bartd_list WHERE bartd_list.id IN (?) LIMIT ? OFFSET ?`, [barIdListStr, perPage, offset]);
+    let [data] = await pool.execute(`SELECT bartd_list.* FROM bartd_list WHERE bartd_list.id IN (${barIdListStr}) LIMIT ? OFFSET ?`, [perPage, offset]);
 
     let newData = [];
     for (let i = 0; i < data.length; i++) {
