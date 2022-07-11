@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： localhost
--- 產生時間： 2022 年 07 月 11 日 18:21
+-- 產生時間： 2022 年 07 月 11 日 18:31
 -- 伺服器版本： 10.4.21-MariaDB
 -- PHP 版本： 7.4.28
 
@@ -1787,6 +1787,13 @@ CREATE TABLE `user_coupon` (
   `coupon_id` int(3) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+--
+-- 傾印資料表的資料 `user_coupon`
+--
+
+INSERT INTO `user_coupon` (`id`, `user_id`, `coupon_id`) VALUES
+(1, 1, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -1824,6 +1831,13 @@ CREATE TABLE `user_list` (
   `create_time` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+--
+-- 傾印資料表的資料 `user_list`
+--
+
+INSERT INTO `user_list` (`id`, `name`, `user_img`, `birth_day`, `gender`, `email`, `about_user`, `address_country`, `address_detail`, `phone`, `vip_level`, `point`, `consumption`, `create_time`) VALUES
+(0, 'INJOIN官方', '/userimgs/user_defult_m.png', '2000-07-01', 'M', 'injoin@gmail.com', NULL, 1, NULL, '', 1, 0, 0, '2022-07-12 00:29:06');
+
 -- --------------------------------------------------------
 
 --
@@ -1835,6 +1849,13 @@ CREATE TABLE `user_pwd` (
   `user_id` int(3) NOT NULL,
   `passwd` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- 傾印資料表的資料 `user_pwd`
+--
+
+INSERT INTO `user_pwd` (`user_id`, `passwd`) VALUES
+(1, '$2b$10$ulsOEU/hwqel05IEpC3t4e7XFtv93Zc3/HDKJEAn4gTkfMOG4nUoC');
 
 -- --------------------------------------------------------
 
@@ -2242,7 +2263,7 @@ ALTER TABLE `user_bartd_like`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `user_coupon`
 --
 ALTER TABLE `user_coupon`
-  MODIFY `id` int(3) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- 使用資料表自動遞增(AUTO_INCREMENT) `user_like`
@@ -2260,7 +2281,7 @@ ALTER TABLE `user_list`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `user_pwd`
 --
 ALTER TABLE `user_pwd`
-  MODIFY `user_id` int(3) NOT NULL AUTO_INCREMENT;
+  MODIFY `user_id` int(3) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- 使用資料表自動遞增(AUTO_INCREMENT) `vip_level`
