@@ -34,11 +34,18 @@ router.get('/getPrdDetail', async (req, res, next) => {
 //   res.json(data);
 // });
 
+router.get('/userinfo', async (req, res) => {
+  const userId = req.query.userId;
+  let [userInfo] = await pool.execute(`SELECT * from user_list WHERE id = ?`, [userId]);
+  res.json({ data: userInfo });
+});
+
 // 訂單成立
 router.post('/', async (req, res) => {
   // console.log('in');
   // 生成orderId(uuid)
   const { v4: uuidv4 } = require('uuid');
+  console.log(req.body);
 
   // order_list
   const orderId = uuidv4();
@@ -71,8 +78,10 @@ router.post('/', async (req, res) => {
     let vip3Cost = 7000;
     if (userInfo.vip_level < 2 && newConsumption > vip2Cost) {
       let [updConsumption] = await pool.execute('UPDATE user_list SET vip_level= 2, consumption = ? WHERE id = ?', [newConsumption, userId]);
+      let [giveCoupon] = await pool.execute('INSERT INTO `user_coupon`(`user_id`, `coupon_id`) VALUES (?, 2)', [userId]);
     } else if (userInfo.vip_level < 3 && newConsumption > vip3Cost) {
       let [updConsumption] = await pool.execute('UPDATE user_list SET vip_level= 3, consumption = ? WHERE id = ?', [newConsumption, userId]);
+      let [giveCoupon] = await pool.execute('INSERT INTO `user_coupon`(`user_id`, `coupon_id`) VALUES (?, 3)', [userId]);
     } else {
       let [updConsumption] = await pool.execute('UPDATE user_list SET consumption = ? WHERE id = ?', [newConsumption, userId]);
     }

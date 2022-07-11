@@ -121,10 +121,11 @@ router.get('/be/list', async (req, res) => {
   });
 });
 
-// 後台完成訂單
+// 後台出貨/送達訂單
 router.post('/be/toFinish', async (req, res) => {
   let orderId = req.body.orderId;
-  let [result] = await pool.execute('UPDATE `order_list` SET `logistics_state`=3 WHERE id = ?', [orderId]);
+  let logisticsState = req.body.logisticsState;
+  let [result] = await pool.execute('UPDATE `order_list` SET `logistics_state`=? WHERE id = ?', [logisticsState, orderId]);
   res.json({ code: 0, result: 'ok' });
 });
 

@@ -454,8 +454,6 @@ router.get('/detail/:prdId', async (req, res, next) => {
   }
 
   // console.log(detailData);
-
-  // console.log(detailData);
   // console.log(detailData[0].cate_m);
   // console.log(detailData[0].cate_s);
 

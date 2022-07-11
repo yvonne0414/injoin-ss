@@ -68,7 +68,7 @@ router.get('/be/list', async (req, res) => {
   // 計算要跳過幾筆）
   let offset = (page - 1) * perPage;
 
-  let [PageData] = await pool.execute('SELECT * FROM coupon_list ORDER BY id DESC LIMIT ? OFFSET ?', [perPage, offset]);
+  let [PageData] = await pool.execute('SELECT * FROM coupon_list ORDER BY id ASC LIMIT ? OFFSET ?', [perPage, offset]);
 
   res.json({
     pagination: {
