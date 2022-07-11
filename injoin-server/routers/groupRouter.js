@@ -104,7 +104,7 @@ router.get('/be/list', async (req, res) => {
   let offset = (page - 1) * perPage;
 
   let [groupListPageData] = await pool.execute(
-    'SELECT group_list.id, group_list.name, group_list.img, group_list.is_official, group_list.status, group_status.status_name FROM group_list JOIN group_status ON group_list.status = group_status.id ORDER BY id DESC LIMIT ? OFFSET ?',
+    'SELECT group_list.id, group_list.name, group_list.img, group_list.is_official, group_list.status, group_status.status_name FROM group_list JOIN group_status ON group_list.status = group_status.id ORDER BY group_list.start_time ASC LIMIT ? OFFSET ?',
     [perPage, offset]
   );
 
@@ -150,7 +150,7 @@ router.get('/list', async (req, res, next) => {
 
   // 取得這一頁的資料 select * from table limit ? offet ?
   let [pageData] = await pool.execute(
-    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id WHERE group_list.is_official =? AND group_list.status < 4 AND group_list.status > 0 ORDER BY start_time DESC LIMIT ? OFFSET ?',
+    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id WHERE group_list.is_official =? AND group_list.status < 4 AND group_list.status > 0 ORDER BY start_time ASC LIMIT ? OFFSET ?',
     [groupCate, perPage, offset]
   );
 
@@ -215,7 +215,7 @@ router.get('/ownaddgroup', async (req, res, next) => {
 
   // 取得這一頁的資料 select * from table limit ? offet ?
   let [pageData] = await pool.execute(
-    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id  WHERE group_list.user_id = ? AND group_list.status < 3 AND group_list.end_time > ? ORDER BY start_time DESC LIMIT ? OFFSET ?',
+    'SELECT group_list.*, user_list.name as username, tw_county.name as cityName, group_status.status_name FROM group_list JOIN user_list ON group_list.user_id = user_list.id JOIN tw_county on group_list.place_conuntry = tw_county.code JOIN group_status ON group_list.status = group_status.id  WHERE group_list.user_id = ? AND group_list.status < 3 AND group_list.end_time > ? ORDER BY start_time ASC LIMIT ? OFFSET ?',
     [userId, nowDate, perPage, offset]
   );
   // console.log(pageData);
@@ -288,7 +288,7 @@ router.get('/participant', async (req, res, next) => {
 
   // 取得這一頁的資料 select * from table limit ? offet ?
   let [pageData] = await pool.execute(
-    'SELECT group_participant.* ,group_list.*, group_status.status_name, tw_county.name AS cityName, user_list.name AS user_name FROM group_participant JOIN group_list ON group_participant.group_id=group_list.id JOIN group_status ON group_list.status=group_status.id JOIN tw_county ON group_list.place_conuntry=tw_county.code JOIN user_list ON group_participant.user_id=user_list.id WHERE group_participant.user_id= ? AND group_list.status < ? AND group_list.status > ? AND group_list.is_official = ? ORDER BY start_time DESC LIMIT ? OFFSET ?',
+    'SELECT group_participant.* ,group_list.*, group_status.status_name, tw_county.name AS cityName, user_list.name AS user_name FROM group_participant JOIN group_list ON group_participant.group_id=group_list.id JOIN group_status ON group_list.status=group_status.id JOIN tw_county ON group_list.place_conuntry=tw_county.code JOIN user_list ON group_participant.user_id=user_list.id WHERE group_participant.user_id= ? AND group_list.status < ? AND group_list.status > ? AND group_list.is_official = ? ORDER BY start_time ASC LIMIT ? OFFSET ?',
     [userId, groupMaxStatus, groupMinStatus, groupCate, perPage, offset]
   );
   // console.log(pageData);
