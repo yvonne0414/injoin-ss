@@ -51,7 +51,7 @@ const uploader = multer({
 // review 多張圖片上傳
 const multi_upload = multer({
   storage,
-  limits: { fileSize: 1 * 1024 * 1024 }, // 1MB
+  limits: { fileSize: 3 * 1024 * 1024 }, // 1MB
   fileFilter: (req, file, cb) => {
     if (file.mimetype == 'image/png' || file.mimetype == 'image/jpg' || file.mimetype == 'image/jpeg') {
       cb(null, true);
